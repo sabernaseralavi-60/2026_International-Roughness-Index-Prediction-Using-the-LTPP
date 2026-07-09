@@ -39,15 +39,17 @@ accumulated since. No published study, as far as we have been able to determine,
 explainable ensemble-learning framework to rigid pavements from LTPP, let alone compared it directly, feature
 for feature and figure for figure, against a flexible-pavement model built the same way.
 
-This paper does exactly that. We built a single, reproducible pipeline — documented in full in
-@sec-methods, and released as open code — that pulls flexible **and** rigid pavement records from the same
+This study addresses that gap directly. We construct a single, reproducible pipeline — documented in full in
+@sec-methods and released as open code — that extracts flexible **and** rigid pavement records from the same
 LTPP release, engineers a comparable feature set for each, and trains matched gradient-boosted ensemble
-models with SHAP explanations for both. Along the way we ran into, and fixed, three real data-engineering
-problems (a pavement-family mislabeling bug, a too-tight survey-matching window, and a subtle train/test
-leakage bug) that we describe openly in @sec-methods and @sec-limitations, because how a dataset gets built
-is as much a part of the scientific record as what the model finds.
+models with SHAP explanations for both. Assembling this pipeline surfaced three data-engineering pitfalls with
+direct consequences for reported accuracy — pavement-family misclassification from an ambiguous categorical
+field, an overly narrow window for matching distress surveys to profile runs, and section-level train/test
+leakage in panel data with repeated visits. We document how each was identified and corrected in @sec-methods
+and @sec-limitations, since these failure modes are plausible in other LTPP-based studies that do not report
+their data-construction and splitting choices in comparable detail.
 
-Our contributions are five-fold:
+The contributions of this work are five-fold:
 
 1. **A reproducible, from-scratch LTPP extraction pipeline** that downloads directly from FHWA's public
    Standard Data Release distribution, requires no manual portal interaction, and assembles matched flexible

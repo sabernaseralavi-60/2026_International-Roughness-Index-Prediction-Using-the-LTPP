@@ -1,23 +1,24 @@
 # Limitations {#sec-limitations}
 
-We report these directly rather than deferring them to a "future work" afterthought:
+This study has the following limitations, which should be considered when interpreting its findings:
 
 - **Complete-case selection on structural predictors.** Both panels retain only records with a fully observed
-  *structural* core; traffic and LTE are now imputed rather than excluded, but the structural core itself
-  (distress, climate, thickness) is still complete-case. Sections with sparser instrumentation are
-  systematically excluded, and we have not formally tested whether they differ systematically from the
-  retained sample.
+  *structural* core; traffic and LTE are imputed rather than excluded, but the structural core itself
+  (distress, climate, thickness) is still restricted to complete cases. Sections with sparser instrumentation
+  are systematically excluded, and whether they differ systematically from the retained sample has not been
+  formally tested.
 - **Mixed age provenance.** 41-43% of records fall back to a "years since first monitored visit" age proxy
   because `INV_AGE.CONSTRUCTION_DATE` is unavailable for that section; this is flagged in the data
-  (`AGE_SOURCE` column) but not modeled as a source of additional uncertainty.
-- **Imputation uncertainty is not propagated.** The `IterativeImputer` produces a single point estimate per
-  missing traffic/LTE value; a multiple-imputation approach with pooled variance (Rubin's rules) would give a
-  more complete uncertainty accounting than the point-estimate MICE pass used here.
+  (`AGE_SOURCE` column) but not modeled as an additional source of uncertainty.
+- **Imputation uncertainty is not propagated.** The `IterativeImputer` produces a single point estimate for
+  each missing traffic/LTE value; a multiple-imputation approach with pooled variance (Rubin's rules) would
+  provide a more complete accounting of uncertainty than the single-pass MICE approach used here.
 - **Rigid submodel instability.** The JPCP/JRCP-only and CRCP-only submodels are informative for the
-  pooling-vs-splitting question but are themselves too small (61-118 sections) to be deployed as standalone
-  operational models; their cross-validation variance is correspondingly large.
+  pooling-versus-splitting comparison but are themselves too small (61-118 sections) to be deployed as
+  standalone operational models; their cross-validation variance is correspondingly large.
 - **Sample size**, while comparable in order of magnitude to @song2022efficient's flexible-only 2,699-record
-  study, is smaller than that benchmark in the flexible family and reflects only LTPP's current curated
+  study, is smaller than that benchmark for the flexible family and reflects only LTPP's current curated
   analysis-ready tables rather than the full historical survey record.
-- **This is a single-snapshot SDR release (39, September 2025).** LTPP data is periodically revised; a fully
-  longitudinal reproducibility check against a future release is left for follow-up work.
+- **This study uses a single snapshot of LTPP data (Standard Data Release 39, September 2025).** LTPP data is
+  periodically revised; a longitudinal reproducibility check against subsequent releases is left for future
+  work.

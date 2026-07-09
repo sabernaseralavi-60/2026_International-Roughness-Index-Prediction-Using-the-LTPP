@@ -1,21 +1,47 @@
 # Conclusion
 
-Rigid pavements have been the quiet exception in a decade of machine-learning progress on IRI prediction —
-not because they are unimportant, but because no one had built the pipeline to include them on equal footing
-with asphalt. We built that pipeline directly against FHWA's public LTPP distribution, fixed three real
-data-engineering bugs along the way (pavement-family misclassification, an overly tight survey-matching
-window, and section-level train/test leakage), added the FWD load-transfer-efficiency feature that a first
-draft of this work had only flagged as future work, replaced ad hoc hyperparameters with an Optuna search
-against group-aware cross-validation, replaced traffic-variable exclusion with leakage-safe imputation and an
-explicit ablation, and tested — rather than assumed — whether JPCP/JRCP and CRCP should share a model. The
-resulting structural models recover known pavement-engineering mechanisms from data alone and outperform
-mechanistic-empirical benchmarks substantially; a companion operational variant with lagged IRI reaches
-$R^2$ up to 0.70 for agencies whose priority is forecasting rather than mechanism attribution. We report every
-place tuning did *not* help (pooled-rigid hyperparameter search, the ANN baseline, JPCP/JRCP-only splitting)
-with the same prominence as the places it did, because a Q1-caliber contribution should be judged on whether
-its claims survive scrutiny, not on how favorably its numbers can be arranged. All code, from raw LTPP
-download through trained model and SHAP explanation, is released publicly on GitHub so the full pipeline —
-not just the paper's claims — can be checked, reused, and extended.
+Rigid pavements have remained on the periphery of machine-learning research on IRI prediction, not because
+they are of lesser practical importance, but because no prior study has extended the explainable
+ensemble-learning approach developed for asphalt pavements to JPCP, JRCP, and CRCP under a comparable, jointly
+benchmarked framework. This study closes that gap using a reproducible pipeline built directly against the
+FHWA LTPP Standard Data Release, spanning 1,552 flexible-pavement and 1,693 rigid-pavement records across the
+U.S. and Canadian LTPP network.
+
+An Optuna-tuned gradient-boosted ensemble, evaluated under a section-grouped train/test split that prevents
+repeated visits to the same physical pavement from inflating reported accuracy, explains 41.4% of
+out-of-sample IRI variance for flexible pavements and 22.0% for pooled rigid pavements using distress,
+structure, and climate variables alone, rising to 69.8% and 39.1%, respectively, when each section's own
+recent IRI history is included as an additional predictor. In both pavement families, the ensemble model
+substantially outperforms a mechanistic-empirical-style linear regression and trains several times faster than
+a comparably accurate random forest. SHAP-based interpretation recovers, without being given the functional
+form of any mechanistic-empirical equation, the same distress mechanisms — transverse cracking and patching
+for flexible pavements, joint faulting and load-transfer efficiency for rigid pavements — that decades of
+pavement engineering research established by hand, while additionally identifying climate interactions that
+fixed-coefficient equations cannot represent.
+
+Three further results have direct implications for how LTPP data is used in pavement performance modeling.
+First, evaluation protocol affects reported accuracy as much as model choice: a train/test split that does not
+account for LTPP's repeated-visit panel structure can substantially overstate accuracy, and reporting
+splitting strategy in sufficient detail for this to be assessed should be standard practice in LTPP-based
+machine-learning studies. Second, traffic loading and load-transfer efficiency each contribute measurably but
+modestly to model accuracy once properly imputed, indicating that neither should be excluded for missingness
+nor treated as the dominant explanatory variable. Third, at the sample sizes currently available in LTPP, a
+single pooled rigid-pavement model spanning JPCP, JRCP, and CRCP — distinguished by a pavement-type indicator
+— generalizes better than separate models fit to each sub-family, despite their differing distress mechanisms.
+
+These findings have practical relevance for both highway agencies and the pavement engineering research
+community. Agencies prioritizing maintenance across mixed flexible and rigid networks can apply a common
+modeling framework rather than maintaining separate tools built on incompatible assumptions, selecting between
+the structural and operational model variants according to whether the underlying question is diagnostic
+(identifying what is driving roughness) or predictive (determining when a section should next be inspected).
+For the research community, the complete pipeline — from raw data acquisition through model training and SHAP
+explanation — is released as open-source code, allowing the reported results to be verified, extended to
+future LTPP releases, and adapted to additional structural or sensor-derived features. The limitations
+discussed in @sec-limitations, particularly the sample size available for rigid pavements and reliance on a
+single LTPP release, motivate a natural direction for future work: revisiting this framework as additional
+LTPP monitoring cycles and Falling Weight Deflectometer coverage accumulate, and incorporating structural
+response data beyond load-transfer efficiency, such as full deflection basins, as a further mechanistic input
+to explainable IRI prediction.
 
 ## Data and Code Availability
 

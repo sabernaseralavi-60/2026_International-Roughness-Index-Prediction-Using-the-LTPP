@@ -29,8 +29,8 @@ applied to asphalt-overlay performance by @zhang2020analysis, consistently outpe
 in the literature on raw prediction accuracy, at the cost of interpretability: a 400-tree ensemble does not
 hand an engineer a coefficient to reason about.
 
-The third generation, which @song2022efficient's paper and this one both belong to, restores interpretability
-without giving up the ensemble's accuracy advantage, using SHapley Additive exPlanations
+The third generation, to which both @song2022efficient's study and the present work belong, restores
+interpretability without sacrificing the ensemble's accuracy advantage, using SHapley Additive exPlanations
 [@lundberg2017unified]. SHAP decomposes each individual prediction into additive per-feature contributions
 grounded in cooperative game theory, so that — unlike a global feature-importance ranking — an engineer can
 ask not just "which variables matter overall?" but "why did the model predict *this* section will roughen
@@ -38,9 +38,8 @@ ask not just "which variables matter overall?" but "why did the model predict *t
 most of the accuracy of the full twenty-feature version, a genuinely useful finding for agencies with limited
 data-collection budgets.
 
-What none of these studies do — flexible-pavement or otherwise — is (a) apply the same explainable-ensemble
-recipe to rigid pavements and compare the two families side by side, (b) directly incorporate Falling Weight
-Deflectometer joint load-transfer efficiency — the mechanistic quantity that faulting is itself a downstream
-symptom of — as a learned feature rather than leaving it implicit, or (c) report accuracy under a splitting
-strategy that accounts for LTPP's repeated-visit panel structure. Those three gaps are what this work
-addresses.
+None of these studies, flexible-pavement or otherwise, (a) apply the same explainable-ensemble approach to
+rigid pavements and compare the two families directly, (b) incorporate Falling Weight Deflectometer
+joint load-transfer efficiency — the mechanistic quantity that faulting is itself a downstream symptom of —
+as a learned feature rather than leaving it implicit, or (c) report accuracy under an evaluation strategy that
+accounts for LTPP's repeated-visit panel structure. This study addresses all three gaps.

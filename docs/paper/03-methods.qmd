@@ -16,12 +16,13 @@ From each state's `Primary_Data.accdb` we pull four categories of table:
 
 - **Performance**: `ANALYSIS_IRI` (bidirectional wheel-path IRI per visit) joined to `EXPERIMENT_SECTION`,
   filtered to GPS-1/GPS-2 (new asphalt construction) for the flexible panel and GPS-3/GPS-4/GPS-5 (new JPCP,
-  JRCP, and CRCP construction) for the rigid panel. We deliberately classify pavement family by **GPS
-  experiment number**, not by the `PAVEMENT_FAMILY` text field — that field encodes granular structural
-  sub-types (`JPCTB`, `JPCUB`, `JRCP`, `ACUB`, ...) rather than a clean flexible/rigid label, and an earlier
-  version of this pipeline that filtered on literal strings like `'JPCP'` silently produced a rigid dataset
-  containing only CRCP sections. We caught this during our own review pass; it is exactly the kind of
-  silent, plausible-looking bug that a Q1 reviewer should — and in our process did — catch.
+  JRCP, and CRCP construction) for the rigid panel. Pavement family is classified by **GPS experiment
+  number** rather than by the `PAVEMENT_FAMILY` text field, because that field encodes granular structural
+  sub-types (`JPCTB`, `JPCUB`, `JRCP`, `ACUB`, ...) rather than a clean flexible/rigid label. Filtering on
+  literal substrings of this field (e.g., matching `'JPCP'`) misclassifies most JPCP sections under their
+  base-type codes and silently yields a rigid dataset composed almost entirely of CRCP; classifying by GPS
+  experiment number avoids this failure mode and was verified against manual tabulation of the resulting
+  pavement-family counts for a sample of states.
 - **Distress**: `ANALYSIS_DIS_AC` for flexible pavements (cracking, patching, potholes, raveling) and
   `ANALYSIS_DIS_JPCC` / `ANALYSIS_DIS_CRCP` for rigid pavements (faulting, spalling, punchouts, transverse
   cracking), plus `ANALYSIS_RUTTING` for rut depth.
@@ -62,21 +63,22 @@ because punchouts are not a JPCP distress mode) rather than missing data.
 
 Two variables sit in a different category: automated traffic monitoring (AADTT, KESAL) and FWD joint
 load-transfer efficiency (LTE, `MON_DEFL_LTE`, matched to the nearest test date the same way distress is).
-Both are missing for 65-80% (traffic) and roughly 45-55% (LTE) of visits nationally — real LTPP coverage gaps,
-not artifacts of our pipeline — but unlike the *structural-zero* case above, a missing traffic count is not a
-zero: the truck simply wasn't counted that year. Rather than drop these variables (our first-draft choice,
-flagged in review as a "red line" for pavement engineers, since deterioration without load is close to
-physically meaningless) or drop the 65-80% of rows that lack them, we impute them with an `IterativeImputer`
-(a MICE-style round-robin regression imputer) fitted **only on the training fold** inside a scikit-learn
-`Pipeline`, so that imputation statistics can never leak information from the held-out test sections. We
-additionally fit an ablation model with these two variables removed entirely, on the identical rows and split
-as the full model, to directly quantify their marginal contribution to both accuracy and SHAP attribution
-(@sec-results).
+Both are missing for 65-80% (traffic) and roughly 45-55% (LTE) of visits nationally — genuine LTPP coverage
+gaps rather than artifacts of the extraction pipeline — but unlike the *structural-zero* case above, a missing
+traffic count does not mean zero traffic: the vehicle count for that year was simply not collected. Excluding
+these variables outright is undesirable on physical grounds, since pavement deterioration without an
+accompanying measure of load is not well posed mechanistically; excluding the rows that lack them would
+instead discard 65-80% of otherwise usable observations. We therefore impute both variables with an
+`IterativeImputer` (a MICE-style round-robin regression imputer) fitted **only on the training fold** inside a
+scikit-learn `Pipeline`, so that imputation statistics cannot leak information from the held-out test
+sections. An ablation model with these two variables removed entirely, fit on the identical rows and split as
+the full model, quantifies their marginal contribution to both accuracy and SHAP attribution (@sec-results).
 
 An indicator variable `IS_CRCP` lets a single **unified** rigid model represent both JPCP/JRCP and CRCP
-sub-families at once; we additionally fit **separate** JPCP/JRCP-only and CRCP-only models on the same
-predictors (minus the family-inapplicable structural zeros) so a reviewer can see directly whether pooling the
-two structurally dissimilar sub-families helps, hurts, or is neutral for predictive accuracy.
+sub-families at once. We additionally fit **separate** JPCP/JRCP-only and CRCP-only models on the same
+predictors (minus the family-inapplicable structural zeros) to assess directly whether pooling the two
+structurally dissimilar sub-families helps, hurts, or is neutral for predictive accuracy, rather than
+assuming an answer.
 
 ## Modeling and evaluation
 
@@ -86,9 +88,9 @@ compare four models on identical train/test splits and identical predictor sets:
 1. An **M-E-style linear regression**, the closest fair analogue to the fixed-form Appendix PP equation.
 2. A **random forest** [@breiman2001random] (400 trees).
 3. An **artificial neural network** (MLP), with architecture (up to three hidden layers), L2 regularization
-   strength, and learning rate tuned by Optuna [Bayesian tree-structured Parzen estimator search, 40 trials]
-   against group-aware cross-validated $R^2$ rather than fixed by hand, specifically to guard against the
-   under-tuned-baseline critique a reviewer would reasonably raise.
+   strength, and learning rate tuned by Optuna (Bayesian tree-structured Parzen estimator search, 40 trials)
+   against group-aware cross-validated $R^2$ rather than fixed by hand, so that benchmark comparisons are not
+   confounded by an under-tuned baseline.
 4. A **gradient-boosted ensemble** using LightGBM [@ke2017lightgbm] — the closest actively-maintained
    equivalent to @song2022efficient's ThunderGBM, which has no maintained public Python distribution — with
    its own Optuna search (40 trials) over tree depth, leaf count, learning rate, subsampling, and L1/L2
@@ -97,24 +99,25 @@ compare four models on identical train/test splits and identical predictor sets:
 All four models, including the linear benchmark, are wrapped in the same imputation pipeline for a fair
 comparison on identical data.
 
-Because LTPP is a *panel*: the same physical section is re-surveyed many times (a median of 4-9 times per
-section in our data, up to 82 times for the most frequently monitored sections), a naive random row-level
-train/test split places repeat visits of the *same* section on both sides of the split, letting the model
-partially memorize section-specific quirks and inflating reported $R^2$. We instead use a `GroupShuffleSplit`
+LTPP is a *panel*: the same physical section is re-surveyed many times (a median of 4-9 times per section in
+this data, up to 82 times for the most frequently monitored sections). A naive random row-level train/test
+split places repeat visits of the *same* section on both sides of the split, allowing the model to partially
+memorize section-specific characteristics and inflating reported $R^2$. We instead use a `GroupShuffleSplit`
 grouped by section ID (`SHRP_ID`), holding out 20% of *sections* — not rows — entirely, and additionally
-report 5-fold group cross-validated $R^2$ for the ensemble model as a variance-aware robustness check, and use
-the same group-aware cross-validation as the Optuna objective so hyperparameter selection itself cannot
-leak across sections. We flag the leakage issue explicitly because we found, in our own review pass, that
-switching from a naive to a group-aware split changed the flexible-pavement ensemble's held-out $R^2$ from
-0.52 to 0.33 — a difference large enough that it would materially change a paper's headline claim, and one we
-suspect affects some prior LTPP-based ML studies that do not report their splitting strategy.
+report 5-fold group cross-validated $R^2$ for the ensemble model as a variance-aware robustness check; the
+same group-aware cross-validation is used as the Optuna objective so hyperparameter selection itself cannot
+leak across sections. This distinction is not a minor implementation detail: switching from a naive to a
+group-aware split changes the flexible-pavement ensemble's held-out $R^2$ from 0.52 to 0.33, a difference
+large enough to alter a study's headline conclusion, and it is plausible that comparable panel-structure
+leakage affects other LTPP-based machine-learning studies that do not report their splitting strategy in
+sufficient detail to assess it.
 
 Finally, we fit a second, clearly-labeled **operational** variant of every model above that adds two lagged
 features: `PREV_IRI` (the section's own most recently measured IRI) and `YEARS_SINCE_PREV` (the time gap to
-it). This reframes the question from "estimate roughness from current distress and site conditions" (the
-*structural* model, above, useful for understanding *why* a section is rough) to "forecast roughness from its
-own recent trajectory plus distress" (the *operational* model, useful for a pavement management system
-deciding what to inspect next). Because IRI is strongly autocorrelated within a section, the operational
-variant's $R^2$ is — expectedly, and not fraudulently — substantially higher; we report both variants side by
-side rather than only the more flattering one, and discuss the distinction explicitly in @sec-results so a
-reader is never left to guess which task a given number answers.
+it). This reframes the modeling task from estimating roughness from current distress and site conditions (the
+*structural* model, above, suited to understanding *why* a section is rough) to forecasting roughness from a
+section's own recent trajectory plus its distress state (the *operational* model, suited to a pavement
+management system deciding what to inspect next). Because IRI is strongly autocorrelated within a section, the
+operational variant's $R^2$ is substantially higher, as expected; both variants are reported side by side
+rather than collapsing to the higher number, and the distinction is discussed explicitly in @sec-results so
+that a given $R^2$ value is always attributable to a specific, named task.

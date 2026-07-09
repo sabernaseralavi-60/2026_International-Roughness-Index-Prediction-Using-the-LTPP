@@ -1,39 +1,44 @@
 # Discussion
 
-Five findings stand out, several of them direct responses to points raised in our own internal review pass.
+Five findings merit closer discussion.
 
-**First, hyperparameter tuning helps unevenly.** Optuna tuning lifted flexible-pavement LightGBM $R^2$ from
-0.333 (untuned, no imputation) to 0.414, but pooled-rigid $R^2$ *fell slightly*, from 0.254 to 0.220, after
-the same tuning procedure. We do not paper over this: with only 179 rigid sections split across a 4-fold
-group cross-validation objective (roughly 35-45 sections per fold), the tuning objective itself is noisy, and
-Optuna can select hyperparameters (here, deeper trees, $\text{max\_depth}=7$) that fit that noisy objective
-better without generalizing better to the actual held-out split. This is a genuine finding about tuning
-small-panel data, not a reporting error, and future work on rigid-pavement LTPP models should budget for it
-— e.g. with nested cross-validation or a wider outer test set.
+**Hyperparameter tuning improves performance unevenly across pavement families.** Optuna tuning raised
+flexible-pavement LightGBM $R^2$ from 0.333 (an untuned configuration without traffic/LTE imputation) to
+0.414, but pooled-rigid $R^2$ fell slightly, from 0.254 to 0.220, under the same tuning procedure. This is a
+genuine methodological finding rather than a reporting artifact: with only 179 rigid sections partitioned
+across a 4-fold group cross-validation objective (roughly 35-45 sections per fold), the tuning objective
+itself carries substantial variance, and Optuna can select hyperparameters (here, deeper trees,
+$\text{max\_depth}=7$) that fit that noisy objective without generalizing better to the held-out split.
+Rigid-pavement models built on comparably small LTPP samples would likely benefit from nested cross-validation
+or a larger outer test set to mitigate this effect.
 
-**Second, FWD load-transfer efficiency earns its place as a first-class feature.** Adding it (previously
-flagged only as future work) both improves rigid-pavement accuracy modestly and, more importantly, gives SHAP
-a direct mechanistic variable to attribute IRI to, rather than only the faulting symptom of that mechanism.
-This is the single most pavement-engineering-relevant addition in this revision.
+**Falling Weight Deflectometer load-transfer efficiency is a substantively useful addition to the feature
+set.** Including it improves rigid-pavement accuracy modestly and, more importantly, gives the SHAP analysis a
+direct mechanistic variable to attribute IRI to, rather than only the faulting symptom of joint-support loss.
+Of the feature extensions considered in this study, incorporating LTE has the clearest grounding in pavement
+engineering mechanics.
 
-**Third, an honest sensitivity analysis on traffic changes the conclusion from "irrelevant" to "modest but
-real."** Excluding AADTT/KESAL via imputation-ablation costs 0.019 $R^2$ (flexible) and 0.017 $R^2$ (pooled
-rigid) — not the dominant driver the classical M-E literature might suggest, but not zero either, and the
-imputation approach lets us say this on the *full* sample rather than confounding the comparison with a
-smaller traffic-complete subset.
+**Ablating traffic loading reframes its role from negligible to modest but genuine.** Excluding AADTT/KESAL
+costs 0.019 $R^2$ for flexible pavements and 0.017 $R^2$ for pooled rigid pavements — well short of the
+dominant role classical mechanistic-empirical formulations often assign traffic loading, but distinguishable
+from zero. Because imputation rather than row deletion is used to handle its missingness, this comparison is
+made on the full analysis sample rather than on a smaller traffic-complete subset that could itself be
+non-representative.
 
-**Fourth, forecasting is a different (and much easier) task than structural attribution, and both are
-useful.** The operational, lagged-IRI models reach $R^2$ up to 0.70 (flexible) — because a section's own
-recent IRI trajectory is, unsurprisingly, the single best predictor of its next reading. We resist the
-temptation to report only this larger number: a pavement management system deciding *when to re-inspect* wants
-the operational model, while an agency deciding *which design or maintenance treatment to specify* wants the
-structural model, which isolates the effect of controllable distress and structural variables independent of
-a section's own history.
+**Forecasting from recent history and structural attribution are distinct tasks with different practical
+uses, and both are reported.** The operational, lagged-IRI models reach $R^2$ up to 0.70 for flexible
+pavements, since a section's own recent IRI trajectory is a strong predictor of its next reading. The two
+model families serve different purposes: a pavement management system deciding when to re-inspect a section
+benefits from the operational model, whereas an agency evaluating which design or maintenance treatment to
+specify benefits from the structural model, which isolates the effect of distress and structural variables
+independent of a section's own measurement history.
 
-**Fifth, pooling beats splitting for rigid pavements at this sample size**, empirically rather than by
-assumption (@sec-results) — a direct, data-driven answer to whether JPCP/JRCP and CRCP need separate models.
+**Pooling outperforms splitting for rigid pavements at the present sample size**, an empirical rather than
+assumed result (@sec-results) that directly addresses whether JPCP/JRCP and CRCP should be modeled jointly or
+separately.
 
-Beyond these five, the persistent gap between single-split and cross-validated $R^2$ (0.414 vs. 0.227 for
-flexible pavements) is a reminder that panel data with repeated section visits punishes optimistic evaluation
-particularly severely; we raise it here not to relitigate prior work we cannot re-audit, but as a
-methodological point future LTPP-ML papers should address explicitly.
+Beyond these five points, the gap between single-split and cross-validated $R^2$ (0.414 vs. 0.227 for flexible
+pavements) illustrates that panel data with repeated section visits is particularly unforgiving of evaluation
+protocols that do not account for its structure. This has implications beyond the present study: work using
+LTPP or comparable longitudinal pavement datasets should report train/test splitting strategy in sufficient
+detail for this source of optimism bias to be assessed by readers.

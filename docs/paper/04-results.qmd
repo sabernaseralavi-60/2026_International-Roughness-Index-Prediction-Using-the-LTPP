@@ -83,9 +83,10 @@ df
 ```
 
 Four findings emerge from @tbl-master. First, **Optuna tuning and MICE-style traffic/LTE imputation
-meaningfully lift the structural models** relative to our earlier, untuned pass: flexible-pavement $R^2$ rises
-from 0.333 to 0.414, and pooled rigid from 0.254 to 0.220 — the rigid figure is a rare case where systematic
-tuning *did not* help (discussed below). Second, **removing traffic and LTE costs a small but consistent
+meaningfully lift the structural models** relative to an untuned configuration with traffic/LTE excluded:
+flexible-pavement $R^2$ rises from 0.333 to 0.414, and pooled rigid from 0.254 to 0.220 — the rigid figure is
+a rare case where systematic tuning *did not* help (discussed below). Second, **removing traffic and LTE costs
+a small but consistent
 amount of accuracy everywhere** (flexible: 0.414 → 0.395; pooled rigid: 0.220 → 0.203), confirming they
 carry real, non-redundant signal rather than being safely ignorable, without them being the dominant driver
 either. Third, **the operational (lagged-IRI) variant is dramatically more accurate everywhere**
@@ -103,9 +104,9 @@ The rigid-pavement ANN is the clearest illustration of a tree ensemble's advanta
 regime: even after a 40-trial Optuna search over architecture, L2 regularization, and learning rate, it
 manages only $R^2=0.009$ (pooled) to $R^2=-1.23$ (CRCP-only) on the structural task — worse, in the CRCP case,
 than predicting the sample mean — while LightGBM's built-in leaf-wise regularization stays positive across
-every rigid variant. This directly answers the "was the ANN just mistuned?" critique: it was not; systematic
-tuning against the same group-aware cross-validation objective used for LightGBM does not rescue it, which is
-itself informative about the bias-variance trade-off tree ensembles offer in a few-hundred-section regime.
+every rigid variant. Because the ANN is tuned against the same group-aware cross-validation objective as
+LightGBM, its weaker performance reflects a genuine bias-variance trade-off in a few-hundred-section regime
+rather than inadequate tuning of the baseline.
 
 ::: {.callout-note}
 ### Why the ensemble wins on speed, not just accuracy
@@ -135,9 +136,9 @@ fixed-form linear model cannot represent on its own. For rigid pavements, wheel-
 wide margin, again mirroring Appendix PP's own JPCP smoothness equation, followed by bound-layer thickness,
 transverse joint spalling, mean annual temperature, and precipitation — plausibly a proxy for pumping and
 moisture-related loss of support beneath joints, a mechanism the classical equation does not represent
-explicitly at all. FWD load-transfer efficiency — newly added in this revision, previously flagged only as
-future work — ranks 10th of 14 features: a real, non-trivial contribution (consistent with the ablation
-result earlier in this chapter) rather than a dominant one, with low LTE (poor joint performance) pushing
+explicitly at all. FWD load-transfer efficiency ranks 10th of 14 features: a real, non-trivial contribution
+(consistent with the ablation result earlier in this chapter) rather than a dominant one, with low LTE (poor
+joint performance) pushing
 predicted IRI up, exactly the mechanistic pathway (loss of aggregate interlock or dowel efficiency → faulting
 → roughness) that Appendix PP's equation encodes only implicitly through the faulting term alone. That LTE
 adds real signal without dominating is itself informative: faulting already captures most of what LTE would
@@ -145,7 +146,8 @@ explain, since faulting is downstream of load-transfer loss — the two are corr
 mechanism, so LTE's marginal contribution *on top of* faulting is modest by construction, not because load
 transfer is unimportant to rigid-pavement roughness.
 
-Encouragingly, the model recovers this structure **without being told the M-E equation's functional form in
+Notably, the model recovers this structure **without being given the M-E equation's functional form in
 advance** — it is discovered from the joint distribution of distress, climate, LTE, and IRI across hundreds of
-LTPP sections, which is exactly the kind of validation a Q1 reviewer should want to see before trusting a SHAP
-explanation: does it recover known physics, or does it just look plausible?
+LTPP sections. This agreement with established mechanistic-empirical relationships is a useful check on the
+SHAP explanation itself: a data-driven attribution that recovers known pavement physics is more credible than
+one that cannot be reconciled with prior engineering knowledge.
