@@ -133,6 +133,35 @@ div.csl-indent {
 }</script>
 <style>html{ scroll-behavior: smooth; }</style>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -436,9 +465,9 @@ div.csl-indent {
 <p>This study has the following limitations, which should be considered when interpreting its findings:</p>
 <ul>
 <li><strong>Complete-case selection on structural predictors.</strong> Both panels retain only records with a fully observed <em>structural</em> core; traffic and LTE are imputed rather than excluded, but the structural core itself (distress, climate, thickness) is still restricted to complete cases. Sections with sparser instrumentation are systematically excluded, and whether they differ systematically from the retained sample has not been formally tested.</li>
-<li><strong>Mixed age provenance.</strong> 41-43% of records fall back to a “years since first monitored visit” age proxy because <code>INV_AGE.CONSTRUCTION_DATE</code> is unavailable for that section; this is flagged in the data (<code>AGE_SOURCE</code> column) but not modeled as an additional source of uncertainty.</li>
-<li><strong>Imputation uncertainty is not propagated.</strong> The <code>IterativeImputer</code> produces a single point estimate for each missing traffic/LTE value; a multiple-imputation approach with pooled variance (Rubin’s rules) would provide a more complete accounting of uncertainty than the single-pass MICE approach used here.</li>
-<li><strong>Rigid submodel instability.</strong> The JPCP/JRCP-only and CRCP-only submodels are informative for the pooling-versus-splitting comparison but are themselves too small (61-118 sections) to be deployed as standalone operational models; their cross-validation variance is correspondingly large.</li>
+<li><strong>Mixed age provenance.</strong> 41-43% of records fall back to a “years since first monitored visit” age proxy because <code>INV_AGE.CONSTRUCTION_DATE</code> is unavailable for that section; this is flagged in the data (<code>AGE_SOURCE</code> column). We attempted to test its effect directly by refitting the structural model on the verified-construction-date subset alone (<a href="04-results.html" class="quarto-xref"><span>Chapter 4</span></a>), but that subset retains only 19-61 sections per family — too few for a stable estimate, and the resulting <span class="math inline">\(R^2\)</span> values are not interpretable as evidence either way. Resolving this properly would require either a larger verified-age subsample or an explicit model of age-source-related measurement error, neither of which is attempted here.</li>
+<li><strong>Imputation uncertainty is largely, but not completely, addressed.</strong> A five-draw stochastic multiple-imputation check (<a href="04-results.html" class="quarto-xref"><span>Chapter 4</span></a>) shows the single-imputation <code>IterativeImputer</code> pipeline used throughout reproduces held-out <span class="math inline">\(R^2\)</span> within 0.003-0.05 across all four families, which is reassuring but does not amount to a formal Rubin’s-rules variance decomposition of a fitted coefficient; no such decomposition is attempted for a black-box ensemble model in this study.</li>
+<li><strong>Rigid submodel instability, and pooling as a sample-size-driven choice rather than a permanent one.</strong> The JPCP/JRCP-only and CRCP-only submodels are informative for the pooling-versus-splitting comparison but are themselves too small (61-118 sections) to be deployed as standalone operational models; their cross-validation variance is correspondingly large. The pooled rigid-pavement model is therefore adopted because it is the better-performing choice <em>at LTPP’s current rigid-pavement sample size</em>, not because JPCP/JRCP and CRCP are assumed to share identical deterioration mechanics. As additional LTPP monitoring cycles accumulate and sub-family sample sizes grow, the pooling-versus-splitting comparison in <a href="04-results.html" class="quarto-xref"><span>Chapter 4</span></a> should be revisited, and separate models may become preferable.</li>
 <li><strong>Sample size</strong>, while comparable in order of magnitude to <span class="citation" data-cites="song2022efficient"><a href="references.html#ref-song2022efficient" role="doc-biblioref">[1]</a></span>’s flexible-only 2,699-record study, is smaller than that benchmark for the flexible family and reflects only LTPP’s current curated analysis-ready tables rather than the full historical survey record.</li>
 <li><strong>This study uses a single snapshot of LTPP data (Standard Data Release 39, September 2025).</strong> LTPP data is periodically revised; a longitudinal reproducibility check against subsequent releases is left for future work.</li>
 </ul>
@@ -940,19 +969,30 @@ div.csl-indent {
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  formally tested.</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Mixed age provenance.** 41-43% of records fall back to a "years since first monitored visit" age proxy</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  because <span class="in">`INV_AGE.CONSTRUCTION_DATE`</span> is unavailable for that section; this is flagged in the data</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`AGE_SOURCE`</span> column) but not modeled as an additional source of uncertainty.</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Imputation uncertainty is not propagated.** The <span class="in">`IterativeImputer`</span> produces a single point estimate for</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  each missing traffic/LTE value; a multiple-imputation approach with pooled variance (Rubin's rules) would</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  provide a more complete accounting of uncertainty than the single-pass MICE approach used here.</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Rigid submodel instability.** The JPCP/JRCP-only and CRCP-only submodels are informative for the</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  pooling-versus-splitting comparison but are themselves too small (61-118 sections) to be deployed as</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  standalone operational models; their cross-validation variance is correspondingly large.</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Sample size**, while comparable in order of magnitude to @song2022efficient's flexible-only 2,699-record</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  study, is smaller than that benchmark for the flexible family and reflects only LTPP's current curated</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  analysis-ready tables rather than the full historical survey record.</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**This study uses a single snapshot of LTPP data (Standard Data Release 39, September 2025).** LTPP data is</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  periodically revised; a longitudinal reproducibility check against subsequent releases is left for future</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  work.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  (<span class="in">`AGE_SOURCE`</span> column). We attempted to test its effect directly by refitting the structural model on the</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  verified-construction-date subset alone (@sec-results), but that subset retains only 19-61 sections per</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  family — too few for a stable estimate, and the resulting $R^2$ values are not interpretable as evidence</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  either way. Resolving this properly would require either a larger verified-age subsample or an explicit</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  model of age-source-related measurement error, neither of which is attempted here.</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Imputation uncertainty is largely, but not completely, addressed.** A five-draw stochastic</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  multiple-imputation check (@sec-results) shows the single-imputation <span class="in">`IterativeImputer`</span> pipeline used</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  throughout reproduces held-out $R^2$ within 0.003-0.05 across all four families, which is reassuring but</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  does not amount to a formal Rubin's-rules variance decomposition of a fitted coefficient; no such</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  decomposition is attempted for a black-box ensemble model in this study.</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Rigid submodel instability, and pooling as a sample-size-driven choice rather than a permanent one.** The</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  JPCP/JRCP-only and CRCP-only submodels are informative for the pooling-versus-splitting comparison but are</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  themselves too small (61-118 sections) to be deployed as standalone operational models; their</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  cross-validation variance is correspondingly large. The pooled rigid-pavement model is therefore adopted</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  because it is the better-performing choice *at LTPP's current rigid-pavement sample size*, not because</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  JPCP/JRCP and CRCP are assumed to share identical deterioration mechanics. As additional LTPP monitoring</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  cycles accumulate and sub-family sample sizes grow, the pooling-versus-splitting comparison in</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  @sec-results should be revisited, and separate models may become preferable.</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**Sample size**, while comparable in order of magnitude to @song2022efficient's flexible-only 2,699-record</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  study, is smaller than that benchmark for the flexible family and reflects only LTPP's current curated</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  analysis-ready tables rather than the full historical survey record.</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="ss">- </span>**This study uses a single snapshot of LTPP data (Standard Data Release 39, September 2025).** LTPP data is</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  periodically revised; a longitudinal reproducibility check against subsequent releases is left for future</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>  work.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 <footer class="footer">

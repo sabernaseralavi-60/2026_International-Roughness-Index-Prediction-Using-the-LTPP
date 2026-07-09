@@ -9,7 +9,7 @@
 <meta name="author" content="Seyed Saber Naseralavi">
 <meta name="author" content="Ali Reza Ghanizadeh">
 <meta name="author" content="Akram Mazaheri">
-<meta name="dcterms.date" content="2026-07-09">
+<meta name="dcterms.date" content="2026-07-10">
 
 <title>Beyond Asphalt</title>
 <style>
@@ -475,7 +475,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">July 9, 2026</p>
+      <p class="date">July 10, 2026</p>
     </div>
   </div>
   
@@ -490,8 +490,8 @@ window.Quarto = {
 <section id="abstract" class="level1 unnumbered">
 <h1 class="unnumbered">Abstract</h1>
 <p>International Roughness Index (IRI) is the primary metric highway agencies use to prioritize pavement maintenance, yet nearly every machine-learning model developed to predict it has been trained on asphalt (flexible) pavements alone, leaving rigid pavements dependent on decades-old mechanistic-empirical regression equations. This study addresses that gap. We build a reproducible pipeline directly against the FHWA Long-Term Pavement Performance (LTPP) Standard Data Release and assemble two matched, feature-rich panels: 1,552 flexible-pavement records across 208 sections in 55 U.S. states and Canadian provinces, and 1,693 rigid-pavement records (JPCP, JRCP, and CRCP) across 179 sections in 46 states/provinces, enriched with Falling Weight Deflectometer joint load-transfer efficiency. An Optuna-tuned gradient-boosted ensemble is benchmarked against a mechanistic-empirical-style regression, a random forest, and an Optuna-tuned artificial neural network, with SHapley Additive exPlanations (SHAP) used to interpret the trained model.</p>
-<p>Using a section-grouped train/test split that prevents repeated visits to the same physical pavement from appearing on both sides of a fold, the ensemble explains 41.4% of out-of-sample IRI variance for flexible pavements and 22.0% for pooled rigid pavements in a <em>structural</em> variant built from distress, structure, and climate variables alone, rising to 69.8% and 39.1%, respectively, in a companion <em>operational</em> variant that additionally uses each section’s own recent IRI history — two models addressing two distinct engineering questions, reported separately rather than conflated. Traffic loading and load-transfer efficiency, imputed rather than excluded, are shown by ablation to contribute modestly but non-trivially (approximately 0.02 <span class="math inline">\(R^2\)</span>) to model accuracy, and pooling JPCP/JRCP and CRCP into a single rigid-pavement model is shown empirically to outperform fitting them separately at the present sample size.</p>
-<p>SHAP analysis recovers, directly from data, the same distress mechanisms that decades of mechanistic-empirical research encoded by hand — transverse cracking and patching for flexible pavements, wheel-path faulting and load-transfer efficiency for rigid pavements — while additionally surfacing climate interactions that classical closed-form equations cannot represent. Cases in which a modeling intervention (rigid-pavement hyperparameter tuning, the neural-network baseline, splitting JPCP/JRCP from CRCP) did not improve performance are reported with the same emphasis as those that did, consistent with the view that a model’s practical value rests on the reliability of its reported behavior, not on how favorably its results can be selectively presented. The complete pipeline, from raw data acquisition through the trained model and its SHAP explanations, is released as open-source code.</p>
+<p>Using a section-grouped train/test split that prevents repeated visits to the same physical pavement from appearing on both sides of a fold, the ensemble explains 41.4% of out-of-sample IRI variance for flexible pavements and 22.0% for pooled rigid pavements in a <em>structural</em> variant built from distress, structure, and climate variables alone, rising to 69.8% and 39.1%, respectively, in a companion <em>operational</em> variant that additionally uses each section’s own recent IRI history. The two variants serve distinct engineering purposes and are reported separately rather than conflated: the structural model isolates the effect of physical, potentially controllable variables and is intended to support design and rehabilitation-effectiveness evaluation, while the operational model is intended for pavement management system (PMS) use in budget planning and inspection prioritization, where forecasting accuracy matters more than mechanism attribution. Traffic loading and load-transfer efficiency, imputed rather than excluded, are shown by ablation to contribute modestly but non-trivially (approximately 0.02 <span class="math inline">\(R^2\)</span>) to model accuracy, and pooling JPCP/JRCP and CRCP into a single rigid-pavement model is shown empirically to outperform fitting them separately at the present sample size.</p>
+<p>SHAP analysis recovers, directly from data, the same distress mechanisms that decades of mechanistic-empirical research encoded by hand — transverse cracking and patching for flexible pavements, wheel-path faulting and load-transfer efficiency for rigid pavements — while additionally surfacing climate interactions that classical closed-form equations cannot represent. A series of robustness checks accompanies the headline model: results are essentially unchanged across three gradient-boosting implementations (LightGBM, XGBoost, CatBoost) and between single- and multiple-imputation treatment of missing data, and a controlled comparison of naive versus group-aware train/test splitting shows that leakage-driven accuracy inflation scales with how much genuine variance the structural features fail to explain, rather than being a fixed quantity. Two candidate feature additions (base type, subgrade plasticity index) are tested and found not to improve on the headline feature set. Cases in which a modeling intervention (rigid-pavement hyperparameter tuning, the neural-network baseline, splitting JPCP/JRCP from CRCP, and the two candidate feature additions) did not improve performance are reported with the same emphasis as those that did, consistent with the view that a model’s practical value rests on the reliability of its reported behavior, not on how favorably its results can be selectively presented. The complete pipeline, from raw data acquisition through the trained model and its SHAP explanations, is released as open-source code.</p>
 <p><strong>Keywords:</strong> International Roughness Index, LTPP, machine learning, SHAP, pavement engineering, flexible pavement, rigid pavement, explainable AI</p>
 <div class="callout callout-style-simple callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -1003,34 +1003,44 @@ window.Quarto = {
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>appearing on both sides of a fold, the ensemble explains 41.4% of out-of-sample IRI variance for flexible</span>
 <span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>pavements and 22.0% for pooled rigid pavements in a *structural* variant built from distress, structure, and</span>
 <span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>climate variables alone, rising to 69.8% and 39.1%, respectively, in a companion *operational* variant that</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>additionally uses each section's own recent IRI history — two models addressing two distinct engineering</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>questions, reported separately rather than conflated. Traffic loading and load-transfer efficiency, imputed</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>rather than excluded, are shown by ablation to contribute modestly but non-trivially (approximately 0.02</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>$R^2$) to model accuracy, and pooling JPCP/JRCP and CRCP into a single rigid-pavement model is shown</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>empirically to outperform fitting them separately at the present sample size.</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>SHAP analysis recovers, directly from data, the same distress mechanisms that decades of mechanistic-empirical</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>research encoded by hand — transverse cracking and patching for flexible pavements, wheel-path faulting and</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>load-transfer efficiency for rigid pavements — while additionally surfacing climate interactions that</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>classical closed-form equations cannot represent. Cases in which a modeling intervention (rigid-pavement</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>hyperparameter tuning, the neural-network baseline, splitting JPCP/JRCP from CRCP) did not improve performance</span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>are reported with the same emphasis as those that did, consistent with the view that a model's practical value</span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>rests on the reliability of its reported behavior, not on how favorably its results can be selectively</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>presented. The complete pipeline, from raw data acquisition through the trained model and its SHAP</span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>explanations, is released as open-source code.</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>**Keywords:** International Roughness Index, LTPP, machine learning, SHAP, pavement engineering, flexible</span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>pavement, rigid pavement, explainable AI</span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reproducing this work</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>The figures and tables in this book are pre-computed by the pipeline in <span class="co">[</span><span class="ot">`/code`</span><span class="co">](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/tree/master/code)</span></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>and read as static assets in the chapters that follow, rather than re-executed at render time, so that</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a><span class="in">`quarto render`</span> does not require a live LTPP download or a multi-minute model-training pass. Run</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>`python code/00_download_and_extract_all.py &amp;&amp; python code/02_clean_and_merge.py &amp;&amp; python code/03_eda.py</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>&amp;&amp; python code/04_model.py flexible &amp;&amp; python code/04_model.py rigid<span class="in">` (plus `</span>rigid_jpcc<span class="in">` / `</span>rigid_crcp`) from</span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>the project root to regenerate everything from scratch.</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>additionally uses each section's own recent IRI history. The two variants serve distinct engineering purposes</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>and are reported separately rather than conflated: the structural model isolates the effect of physical,</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>potentially controllable variables and is intended to support design and rehabilitation-effectiveness</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>evaluation, while the operational model is intended for pavement management system (PMS) use in budget</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>planning and inspection prioritization, where forecasting accuracy matters more than mechanism attribution.</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>Traffic loading and load-transfer efficiency, imputed rather than excluded, are shown by ablation to</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>contribute modestly but non-trivially (approximately 0.02 $R^2$) to model accuracy, and pooling JPCP/JRCP and</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>CRCP into a single rigid-pavement model is shown empirically to outperform fitting them separately at the</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>present sample size.</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>SHAP analysis recovers, directly from data, the same distress mechanisms that decades of mechanistic-empirical</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>research encoded by hand — transverse cracking and patching for flexible pavements, wheel-path faulting and</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>load-transfer efficiency for rigid pavements — while additionally surfacing climate interactions that</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>classical closed-form equations cannot represent. A series of robustness checks accompanies the headline</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>model: results are essentially unchanged across three gradient-boosting implementations (LightGBM, XGBoost,</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>CatBoost) and between single- and multiple-imputation treatment of missing data, and a controlled comparison</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>of naive versus group-aware train/test splitting shows that leakage-driven accuracy inflation scales with how</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>much genuine variance the structural features fail to explain, rather than being a fixed quantity. Two</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>candidate feature additions (base type, subgrade plasticity index) are tested and found not to improve on the</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>headline feature set. Cases in which a modeling intervention (rigid-pavement hyperparameter tuning, the</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>neural-network baseline, splitting JPCP/JRCP from CRCP, and the two candidate feature additions) did not</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>improve performance are reported with the same emphasis as those that did, consistent with the view that a</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>model's practical value rests on the reliability of its reported behavior, not on how favorably its results</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>can be selectively presented. The complete pipeline, from raw data acquisition through the trained model and</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>its SHAP explanations, is released as open-source code.</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>**Keywords:** International Roughness Index, LTPP, machine learning, SHAP, pavement engineering, flexible</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>pavement, rigid pavement, explainable AI</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>::: {.callout-tip}</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a><span class="fu">## Reproducing this work</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>The figures and tables in this book are pre-computed by the pipeline in <span class="co">[</span><span class="ot">`/code`</span><span class="co">](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/tree/master/code)</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>and read as static assets in the chapters that follow, rather than re-executed at render time, so that</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a><span class="in">`quarto render`</span> does not require a live LTPP download or a multi-minute model-training pass. Run</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>`python code/00_download_and_extract_all.py &amp;&amp; python code/02_clean_and_merge.py &amp;&amp; python code/03_eda.py</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>&amp;&amp; python code/04_model.py flexible &amp;&amp; python code/04_model.py rigid<span class="in">` (plus `</span>rigid_jpcc<span class="in">` / `</span>rigid_crcp`) from</span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>the project root to regenerate everything from scratch.</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>:::</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 <footer class="footer">
