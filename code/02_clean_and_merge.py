@@ -21,10 +21,18 @@ section and for the Q1-reviewer critique pass):
    proxy for the MEPDG "P200" subgrade fines fraction; documented as an
    approximation, not an exact P200 replication.
 4. Missing-data handling: rows missing MEAN_IRI are dropped (target variable).
-   Predictor columns with >60% missingness at the national level are dropped;
-   remaining gaps are left as NA for model-side imputation (documented, not
-   silently mean-filled, so the modeling stage can make an explicit choice).
-5. Outlier flags: any *_FLAG columns already carried over from LTPP's own
+   The "clean" complete-case files require only the small, well-populated
+   *structural* core (age, thickness, climate, primary distress); sparser
+   variables -- traffic (AADTT/KESAL) and FWD joint load-transfer efficiency
+   (LOAD_TRANSFER_EFFICIENCY) -- are left as NA here and imputed with a
+   train-fold-only IterativeImputer inside code/04_model.py, never at this
+   shared-data stage, so imputation statistics can never leak test-fold
+   information into training.
+5. Lag features: PREV_IRI and YEARS_SINCE_PREV (the section's own most
+   recent earlier IRI reading and the gap to it) are computed here so that
+   04_model.py can train an optional second "operational forecasting" model
+   alongside the primary structural one -- see add_lag_features().
+6. Outlier flags: any *_FLAG columns already carried over from LTPP's own
    ANALYSIS_* quality-control flags are preserved and rows flagged 'I'
    (invalid) or 'D' (deleted) in RECORD_STATUS-derived columns are excluded
    where present.
@@ -55,6 +63,25 @@ def aggregate_iri(df):
     agg_cols["MEAN_IRI"] = "mean"
     out = df.groupby(key, as_index=False).agg(agg_cols)
     return out
+
+
+def add_lag_features(df):
+    """PREV_IRI / YEARS_SINCE_PREV: the most recent earlier IRI measurement
+    for the same physical section, and the time gap to it. This reframes the
+    prediction task from "estimate condition from distress alone" (a
+    structural/mechanistic model) to "forecast condition from its own recent
+    trajectory plus distress" (an operational model) -- both are reported
+    side by side in the paper, since they answer different questions and a
+    lagged model's much higher R^2 should not be read as the structural
+    model being "wrong". The first monitored visit of every section has no
+    prior value (PREV_IRI = NaN) and is unavoidably excluded from the lagged
+    model only."""
+    df = df.sort_values(["SHRP_ID", "CONSTRUCTION_NO", "VISIT_DATE"])
+    grp = df.groupby(["SHRP_ID", "CONSTRUCTION_NO"])
+    df["PREV_IRI"] = grp["MEAN_IRI"].shift(1)
+    prev_date = grp["VISIT_DATE"].shift(1)
+    df["YEARS_SINCE_PREV"] = (df["VISIT_DATE"] - prev_date).dt.days / 365.25
+    return df
 
 
 def add_age(df):
@@ -97,6 +124,7 @@ def clean_flexible():
     if not len(df):
         return None
     df = aggregate_iri(df)
+    df = add_lag_features(df)
     df = add_age(df)
     df["SITE_FACTOR"] = (
         df["AGE_YR"].clip(lower=0)
@@ -118,6 +146,7 @@ def clean_rigid():
     if not len(df):
         return None
     df = aggregate_iri(df)
+    df = add_lag_features(df)
     df = add_age(df)
     df = df.dropna(subset=["MEAN_IRI"])
     df.to_csv(os.path.join(OUT_DIR, "rigid_iri_raw_merged.csv"), index=False)

@@ -1,0 +1,13 @@
+Pavement family,Variant,N_train,N_test,R2 (held-out),RMSE,CV R2 mean,CV R2 std
+Flexible (GPS-1/2),Structural (full),1317,235,0.414,0.495,0.227,0.113
+Flexible (GPS-1/2),"Structural, traffic+LTE ablated",1317,235,0.395,0.502,0.21,0.107
+Flexible (GPS-1/2),Operational (+ lagged IRI),1179,180,0.698,0.384,0.542,0.095
+"Rigid, pooled (JPCP+JRCP+CRCP)",Structural (full),1286,407,0.22,0.609,0.188,0.099
+"Rigid, pooled (JPCP+JRCP+CRCP)","Structural, traffic+LTE ablated",1286,407,0.203,0.616,0.166,0.087
+"Rigid, pooled (JPCP+JRCP+CRCP)",Operational (+ lagged IRI),1103,384,0.391,0.39,0.57,0.125
+"Rigid, JPCP/JRCP only",Structural (full),1097,193,-0.294,0.928,0.182,0.048
+"Rigid, JPCP/JRCP only","Structural, traffic+LTE ablated",1097,193,-0.331,0.941,0.185,0.052
+"Rigid, JPCP/JRCP only",Operational (+ lagged IRI),851,285,0.431,0.49,0.574,0.117
+"Rigid, CRCP only",Structural (full),313,90,0.226,0.403,0.066,0.246
+"Rigid, CRCP only","Structural, traffic+LTE ablated",313,90,0.244,0.399,0.082,0.29
+"Rigid, CRCP only",Operational (+ lagged IRI),267,84,0.268,0.407,0.54,0.256

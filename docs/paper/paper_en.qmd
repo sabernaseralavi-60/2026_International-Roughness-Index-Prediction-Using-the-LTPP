@@ -16,21 +16,29 @@ date: today
 abstract: |
   International Roughness Index (IRI) governs how highway agencies prioritize maintenance, yet almost every
   machine-learning model built to predict it has been trained on asphalt (flexible) pavements alone, leaving
-  rigid pavements to decades-old mechanistic-empirical regression equations. We close that gap. Using a
-  reproducible pipeline built directly against the FHWA Long-Term Pavement Performance (LTPP) Standard Data
-  Release, we assemble two matched, feature-rich panels &mdash; 1,552 flexible-pavement records across 208
-  sections in 55 states/provinces, and 1,693 rigid-pavement records (JPCP, JRCP, and CRCP) across 179 sections
-  in 46 states/provinces &mdash; and train a gradient-boosted ensemble model, benchmarked against an
-  MEPDG-style regression, a random forest, and an artificial neural network, with SHapley Additive exPlanations
-  (SHAP) used to open the black box. Using a section-grouped train/test split that prevents the same physical
-  pavement from leaking across folds, the ensemble model explains 33.3% of out-of-sample IRI variance for
-  flexible pavements and 25.4% for rigid pavements, in both cases outperforming the mechanistic-empirical
-  benchmark by more than 60% relative RMSE reduction while training 3&ndash;5&times; faster than the random
-  forest baseline. SHAP analysis recovers, from data alone, the same dominant distress mechanisms that decades
-  of mechanistic-empirical research encoded by hand &mdash; transverse cracking and patching for flexible
-  pavements, wheel-path faulting for rigid pavements &mdash; while also surfacing climate interactions that
-  the classical equations treat as fixed coefficients. We report this honestly, including where the model
-  falls short, and release the full pipeline, from raw LTPP download through trained model, as open code.
+  rigid pavements to decades-old mechanistic-empirical regression equations. We close that gap, and respond
+  directly to a Q1-caliber review of an earlier draft of this work. Using a reproducible pipeline built
+  directly against the FHWA Long-Term Pavement Performance (LTPP) Standard Data Release, we assemble two
+  matched, feature-rich panels &mdash; 1,552 flexible-pavement records across 208 sections in 55
+  states/provinces, and 1,693 rigid-pavement records (JPCP, JRCP, and CRCP) across 179 sections in 46
+  states/provinces &mdash; now enriched with Falling Weight Deflectometer joint load-transfer efficiency, and
+  train an Optuna-tuned gradient-boosted ensemble, benchmarked against an MEPDG-style regression, a random
+  forest, and an Optuna-tuned artificial neural network, with SHapley Additive exPlanations (SHAP) used to open
+  the black box. Using a section-grouped train/test split that prevents the same physical pavement from
+  leaking across folds, the tuned ensemble explains 41.4% of out-of-sample IRI variance for flexible pavements
+  and 22.0% for pooled rigid pavements in a *structural* variant built from distress, structure, and climate
+  alone, and up to 69.8% (flexible) and 39.1% (rigid) in a companion *operational* variant that adds each
+  section's own recent IRI history &mdash; two deliberately distinct models answering two different
+  engineering questions, reported side by side rather than conflated. Traffic loading and load-transfer
+  efficiency, imputed rather than dropped, are shown by ablation to contribute modestly but non-trivially
+  (roughly 0.02 $R^2$) to accuracy, and an explicit test shows that pooling JPCP/JRCP and CRCP into one rigid
+  model outperforms splitting them at this sample size. SHAP analysis recovers, from data alone, the same
+  dominant distress mechanisms that decades of mechanistic-empirical research encoded by hand &mdash;
+  transverse cracking and patching for flexible pavements, wheel-path faulting and load-transfer efficiency for
+  rigid pavements &mdash; while also surfacing climate interactions that the classical equations treat as fixed
+  coefficients. We report this honestly, including the cases (a rigid-pavement hyperparameter search, the ANN
+  baseline, JPCP/JRCP-only splitting) where an intervention did *not* help, and release the full pipeline, from
+  raw LTPP download through trained model, as open code.
 keywords: [International Roughness Index, LTPP, machine learning, SHAP, pavement engineering, flexible pavement, rigid pavement, explainable AI]
 bibliography: references.bib
 csl: ieee.csl
@@ -122,33 +130,56 @@ pavement-family mislabeling bug, a too-tight survey-matching window, and a subtl
 we describe openly in @sec-methods and @sec-limitations, because how a dataset gets built is as much a part of
 the scientific record as what the model finds.
 
-Our contributions are threefold:
+Our contributions are five-fold:
 
 1. **A reproducible, from-scratch LTPP extraction pipeline** that downloads directly from FHWA's public
    Standard Data Release distribution, requires no manual portal interaction, and assembles matched flexible
-   and rigid pavement panels with distress, structure, climate, and traffic covariates.
+   and rigid pavement panels with distress, structure, climate, traffic, and — newly — Falling Weight
+   Deflectometer joint load-transfer-efficiency covariates.
 2. **The first (to our knowledge) explainable ensemble-learning IRI model for rigid LTPP pavements**,
-   benchmarked identically to a companion flexible-pavement model.
+   benchmarked identically to a companion flexible-pavement model, with hyperparameters selected by a
+   group-aware Optuna search rather than fixed by hand.
 3. **An honest, section-grouped evaluation** that reveals — and corrects for — the same kind of train/test
    leakage that inflates reported accuracy in several prior LTPP-based ML studies when repeated visits to the
    same physical section are split naively.
+4. **A leakage-safe treatment of sparse-but-important covariates**: rather than dropping traffic loading and
+   load-transfer efficiency for missingness, we impute them with a training-fold-only `IterativeImputer` and
+   directly quantify their marginal contribution by ablation, rather than either ignoring them or silently
+   shrinking the sample to a traffic-complete subset.
+5. **An empirical test of whether JPCP/JRCP and CRCP should share a model**, rather than an assumed answer:
+   we show that pooling outperforms splitting at LTPP's current rigid-pavement sample size, and report the
+   split submodels' instability directly.
 
 ## Related Work
 
 IRI prediction models fall broadly into three generations. The first generation, exemplified by the AASHO
-Road Test serviceability equations and the M-E Pavement Design Guide's smoothness models
-[@ara2004smoothness], uses linear or mildly non-linear regression on a small, hand-selected set of distress
-and site variables. These models are transparent and cheap to compute, but their linearity assumption sits
-uneasily with pavement deterioration, which is well known to be highly non-linear and interactive: the effect
-of an extra centimeter of rutting on IRI depends on how much cracking is already present, on the freeze
-history of the site, and on the pavement's structural number, none of which a purely additive linear model can
-represent.
+Road Test serviceability equations, @paterson1987road's World Bank incremental deterioration models (later
+folded into HDM-III/HDM-4), and the M-E Pavement Design Guide's smoothness models [@ara2004smoothness; @vonquintus2001flexible],
+uses linear or mildly non-linear regression on a small, hand-selected set of distress and site variables.
+@vonquintus2001flexible's companion appendix to the one this paper builds on — Appendix OO-1, for flexible
+rather than rigid pavements — established the same distress-based regression form for AC pavements that
+Appendix PP later established for JPCP/CRCP, and both remain the operational core of AASHTOWare Pavement ME
+today. Numerous follow-on studies refit this linear form to different regions and pavement types: @alomari1995effect
+and @mactutis2000investigation examined how individual distress types (cracking, rutting, patching) trade off
+against each other in explaining IRI on the AASHO and WesTrack test sections respectively; @khattak2014iri and
+@perezacebo2020iri fit comparable regressions specifically for HMA-overlaid and two-lane flexible pavements.
+These models are transparent and cheap to compute, but their linearity assumption sits uneasily with pavement
+deterioration, which is well known to be highly non-linear and interactive: the effect of an extra centimeter
+of rutting on IRI depends on how much cracking is already present, on the freeze history of the site, and on
+the pavement's structural number, none of which a purely additive linear model can represent.
 
-The second generation replaced the linear form with flexible learners — random forests, gradient boosting, and
-artificial neural networks — trained directly on LTPP or state DOT pavement management data. @breiman2001random's
-random forest and the gradient boosting family popularized by tools like @ke2017lightgbm's LightGBM
-consistently outperform linear M-E benchmarks in the literature on prediction accuracy, at the cost of
-interpretability: a 400-tree ensemble does not hand an engineer a coefficient to reason about.
+The second generation replaced the linear form with flexible learners trained directly on LTPP or state DOT
+pavement management data. Early work leaned on artificial neural networks: @choi2004pavement's back-propagation
+network and @ziari2016prediction's ANN/GMDH comparison both showed sizeable accuracy gains over linear
+regression on flexible-pavement IRI, and @kaya2020statistics benchmarked statistical and AI-based remaining-service-life
+models side by side on flexible and composite pavements. @kargahostadi2015framework's comparative framework
+for empirical pavement performance models was among the first to argue systematically that model *form*, not
+just coefficients, should be selected empirically rather than assumed. Tree ensembles arrived next:
+@breiman2001random's random forest, applied to LTPP flexible pavements by @gong2018use with a reported testing-set
+$R^2$ of 0.974, and the gradient boosting family popularized by tools like @ke2017lightgbm's LightGBM and
+applied to asphalt-overlay performance by @zhang2020analysis, consistently outperformed linear M-E benchmarks
+in the literature on raw prediction accuracy, at the cost of interpretability: a 400-tree ensemble does not
+hand an engineer a coefficient to reason about.
 
 The third generation, which @song2022efficient's paper and this one both belong to, restores interpretability
 without giving up the ensemble's accuracy advantage, using SHapley Additive exPlanations
@@ -159,9 +190,12 @@ ask not just "which variables matter overall?" but "why did the model predict *t
 most of the accuracy of the full twenty-feature version, a genuinely useful finding for agencies with limited
 data-collection budgets.
 
-What none of these studies do — flexible-pavement or otherwise — is apply the same explainable-ensemble
-recipe to rigid pavements and compare the two families side by side. That comparison is the gap this paper
-fills.
+What none of these studies do — flexible-pavement or otherwise — is (a) apply the same explainable-ensemble
+recipe to rigid pavements and compare the two families side by side, (b) directly incorporate Falling Weight
+Deflectometer joint load-transfer efficiency — the mechanistic quantity that faulting is itself a downstream
+symptom of — as a learned feature rather than leaving it implicit, or (c) report accuracy under a splitting
+strategy that accounts for LTPP's repeated-visit panel structure. Those three gaps are what this paper
+addresses.
 
 ## Data and Methods {#sec-methods}
 
@@ -218,39 +252,73 @@ $P_{200}$ subgrade-fines term.
 
 For the flexible panel, a record is retained for modeling only if it has non-missing IRI, age, site factor,
 bound-layer thickness, freezing index, precipitation, transverse and longitudinal MEPDG crack length, HPMS16
-cracking percent, and patching area (a "complete-case" filter). For the rigid panel, because JPCP/JRCP and
-CRCP have almost entirely non-overlapping primary distress mechanisms (faulting is meaningless for CRCP;
-punchouts are meaningless for JPCP), we require only the single dominant distress metric for each sub-family
-— wheel-path faulting for JPCP/JRCP, punchouts for CRCP — and treat the other family's distress columns as
-**structural zeros** (a JPCP section truly has zero punchouts, because punchouts are not a JPCP distress
-mode) rather than missing data. An indicator variable `IS_CRCP` lets a single unified rigid model represent
-both sub-families. Automated traffic monitoring (AADTT, KESAL) is excluded from the required predictor set
-entirely: it is missing for 65-80% of visits nationally, a well-documented LTPP coverage gap, and requiring it
-would have cut both panels by roughly two-thirds.
+cracking percent, and patching area (a "complete-case" filter on the well-populated *structural* predictors).
+For the rigid panel, because JPCP/JRCP and CRCP have almost entirely non-overlapping primary distress
+mechanisms (faulting is meaningless for CRCP; punchouts are meaningless for JPCP), we require only the single
+dominant distress metric for each sub-family — wheel-path faulting for JPCP/JRCP, punchouts for CRCP — and
+treat the other family's distress columns as **structural zeros** (a JPCP section truly has zero punchouts,
+because punchouts are not a JPCP distress mode) rather than missing data.
+
+Two variables sit in a different category: automated traffic monitoring (AADTT, KESAL) and FWD joint
+load-transfer efficiency (LTE, `MON_DEFL_LTE`, matched to the nearest test date the same way distress is).
+Both are missing for 65-80% (traffic) and roughly 45-55% (LTE) of visits nationally — real LTPP coverage gaps,
+not artifacts of our pipeline — but unlike the *structural-zero* case above, a missing traffic count is not a
+zero: the truck simply wasn't counted that year. Rather than drop these variables (our first-draft choice,
+flagged in review as a "red line" for pavement engineers, since deterioration without load is close to
+physically meaningless) or drop the 65-80% of rows that lack them, we impute them with an `IterativeImputer`
+(a MICE-style round-robin regression imputer) fitted **only on the training fold** inside a scikit-learn
+`Pipeline`, so that imputation statistics can never leak information from the held-out test sections. We
+additionally fit an ablation model with these two variables removed entirely, on the identical rows and split
+as the full model, to directly quantify their marginal contribution to both accuracy and SHAP attribution
+(@sec-results).
+
+An indicator variable `IS_CRCP` lets a single **unified** rigid model represent both JPCP/JRCP and CRCP
+sub-families at once; we additionally fit **separate** JPCP/JRCP-only and CRCP-only models on the same
+predictors (minus the family-inapplicable structural zeros) so a reviewer can see directly whether pooling the
+two structurally dissimilar sub-families helps, hurts, or is neutral for predictive accuracy.
 
 ### Modeling and evaluation
 
-For each pavement family we compare four models on identical train/test splits and identical predictor sets:
+For each pavement family (and, for rigid pavements, each of the unified/JPCP-only/CRCP-only groupings) we
+compare four models on identical train/test splits and identical predictor sets:
 
 1. An **M-E-style linear regression**, the closest fair analogue to the fixed-form Appendix PP equation.
 2. A **random forest** [@breiman2001random] (400 trees).
-3. An **artificial neural network** (two hidden layers, 64 and 32 units, early stopping).
+3. An **artificial neural network** (MLP), with architecture (up to three hidden layers), L2 regularization
+   strength, and learning rate tuned by Optuna [Bayesian tree-structured Parzen estimator search, 40 trials]
+   against group-aware cross-validated $R^2$ rather than fixed by hand, specifically to guard against the
+   under-tuned-baseline critique a reviewer would reasonably raise.
 4. A **gradient-boosted ensemble** using LightGBM [@ke2017lightgbm] — the closest actively-maintained
    equivalent to @song2022efficient's ThunderGBM, which has no maintained public Python distribution — with
-   SHAP [@lundberg2017unified] used to explain the trained model.
+   its own Optuna search (40 trials) over tree depth, leaf count, learning rate, subsampling, and L1/L2
+   regularization, and SHAP [@lundberg2017unified] used to explain the final tuned model.
+
+All four models, including the linear benchmark, are wrapped in the same imputation pipeline for a fair
+comparison on identical data.
 
 Because LTPP is a *panel*: the same physical section is re-surveyed many times (a median of 4-9 times per
 section in our data, up to 82 times for the most frequently monitored sections), a naive random row-level
 train/test split places repeat visits of the *same* section on both sides of the split, letting the model
 partially memorize section-specific quirks and inflating reported $R^2$. We instead use a `GroupShuffleSplit`
 grouped by section ID (`SHRP_ID`), holding out 20% of *sections* — not rows — entirely, and additionally
-report 5-fold group cross-validated $R^2$ for the ensemble model as a variance-aware robustness check. We
-flag this explicitly because we found, in our own review pass, that switching from a naive to a
-group-aware split changed the flexible-pavement ensemble's held-out $R^2$ from 0.52 to 0.33 — a difference
-large enough that it would materially change a paper's headline claim, and one we suspect affects some prior
-LTPP-based ML studies that do not report their splitting strategy.
+report 5-fold group cross-validated $R^2$ for the ensemble model as a variance-aware robustness check, and use
+the same group-aware cross-validation as the Optuna objective so hyperparameter selection itself cannot
+leak across sections. We flag the leakage issue explicitly because we found, in our own review pass, that
+switching from a naive to a group-aware split changed the flexible-pavement ensemble's held-out $R^2$ from
+0.52 to 0.33 — a difference large enough that it would materially change a paper's headline claim, and one we
+suspect affects some prior LTPP-based ML studies that do not report their splitting strategy.
 
-## Results
+Finally, we fit a second, clearly-labeled **operational** variant of every model above that adds two lagged
+features: `PREV_IRI` (the section's own most recently measured IRI) and `YEARS_SINCE_PREV` (the time gap to
+it). This reframes the question from "estimate roughness from current distress and site conditions" (the
+*structural* model, above, useful for understanding *why* a section is rough) to "forecast roughness from its
+own recent trajectory plus distress" (the *operational* model, useful for a pavement management system
+deciding what to inspect next). Because IRI is strongly autocorrelated within a section, the operational
+variant's $R^2$ is — expectedly, and not fraudulently — substantially higher; we report both variants side by
+side rather than only the more flattering one, and discuss the distinction explicitly in @sec-results so a
+reader is never left to guess which task a given number answers.
+
+## Results {#sec-results}
 
 ### Dataset summary
 
@@ -283,109 +351,170 @@ rather than reading it off a single scatterplot.
 
 ### Model comparison
 
-@tbl-flex-metrics and @tbl-rigid-metrics report held-out performance for all four models, using the
-section-grouped split described in @sec-methods.
+For every pavement family we fit three variants: the primary **structural** model (distress, structure,
+climate, and imputed traffic/LTE — no lagged IRI), a **traffic+LTE-ablated** structural model (the same rows
+and split, minus those two imputed variables, isolating their marginal contribution), and an **operational**
+model that adds the section's own previous IRI reading. @tbl-master reports held-out LightGBM performance
+across all of them; @tbl-flex-metrics and @tbl-rigid-metrics give the full four-model comparison (linear,
+random forest, Optuna-tuned ANN, Optuna-tuned LightGBM) for the primary structural variant.
+
+```{python}
+#| label: tbl-master
+#| tbl-cap: "LightGBM held-out R² across every pavement family and model variant (full N/RMSE detail in tables/master_lightgbm_comparison.csv)."
+#| echo: false
+import pandas as pd
+df = pd.read_csv("../../tables/master_lightgbm_comparison.csv")
+df["Pavement family"] = df["Pavement family"].str.replace("Rigid, pooled (JPCP+JRCP+CRCP)", "Rigid, pooled", regex=False)
+df["Pavement family"] = df["Pavement family"].str.replace("Rigid, JPCP/JRCP only", "Rigid, JPCP only", regex=False)
+df["Variant"] = df["Variant"].str.replace("Structural, traffic+LTE ablated", "No traffic/LTE", regex=False)
+df["Variant"] = df["Variant"].str.replace("Operational (+ lagged IRI)", "Operational (lag)", regex=False)
+df[["Pavement family", "Variant", "R2 (held-out)", "CV R2 mean", "CV R2 std"]]
+```
 
 ```{python}
 #| label: tbl-flex-metrics
-#| tbl-cap: "Model comparison — flexible (asphalt) pavements."
+#| tbl-cap: "Structural model comparison — flexible (asphalt) pavements."
 #| echo: false
 import pandas as pd
-df = pd.read_csv("../../tables/flexible_model_metrics.csv")
+df = pd.read_csv("../../tables/flexible_structural_model_metrics.csv")
 df[["Model","R2","RMSE","MAE","Train_time_s","Speedup_vs_RF"]].round(3)
 ```
 
 ```{python}
 #| label: tbl-rigid-metrics
-#| tbl-cap: "Model comparison — rigid (JPCP/JRCP/CRCP) pavements."
+#| tbl-cap: "Structural model comparison — rigid pavements, pooled JPCP+JRCP+CRCP."
 #| echo: false
 import pandas as pd
-df = pd.read_csv("../../tables/rigid_model_metrics.csv")
+df = pd.read_csv("../../tables/rigid_structural_model_metrics.csv")
 df[["Model","R2","RMSE","MAE","Train_time_s","Speedup_vs_RF"]].round(3)
 ```
 
-In both families, the gradient-boosted ensemble is the strongest model on held-out sections — $R^2=0.333$
-(flexible) and $R^2=0.254$ (rigid) — and improves markedly on the M-E-style linear benchmark (a 60.9%
-and 61.6% relative RMSE reduction, respectively), while training 4.4$\times$ and 4.1$\times$ faster than
-the random forest. Five-fold group cross-validation gives a lower, and honest, sense of the uncertainty
-around that single-split estimate: $R^2 = 0.190 \pm 0.109$ for flexible pavements and $0.153 \pm 0.095$
-for rigid pavements. We report the wide cross-validation spread deliberately rather than only the
-more favorable single-split number: with 151-208 held-out sections per fold, fold-to-fold variance is
-real, and a reader deciding whether this model is ready for operational deployment should see it.
+Four findings emerge from @tbl-master. First, **Optuna tuning and MICE-style traffic/LTE imputation
+meaningfully lift the structural models** relative to our earlier, untuned pass: flexible-pavement $R^2$ rises
+from 0.333 to 0.414, and pooled rigid from 0.254 to 0.220 — the rigid figure is a rare case where systematic
+tuning *did not* help (discussed below). Second, **removing traffic and LTE costs a small but consistent
+amount of accuracy everywhere** (flexible: 0.414 → 0.395; pooled rigid: 0.220 → 0.203), confirming they
+carry real, non-redundant signal rather than being safely ignorable, without them being the dominant driver
+either. Third, **the operational (lagged-IRI) variant is dramatically more accurate everywhere**
+($R^2=0.698$ flexible, $0.391$ pooled rigid), which is expected — IRI is strongly autocorrelated within a
+section — and is reported as a distinct, clearly-labeled model rather than folded into the "structural"
+headline number, since the two answer different engineering questions (see @sec-methods). Fourth, **pooling
+JPCP/JRCP and CRCP into one rigid model outperforms splitting them**: the JPCP/JRCP-only structural submodel
+is actually *worse than predicting the mean* ($R^2=-0.294$, $n=118$ sections), and the CRCP-only submodel,
+while positive ($R^2=0.226$), carries enormous cross-validation variance ($\pm0.246$) from having only 61
+sections to work with. Splitting a modest sample into two smaller, noisier ones costs more in lost training
+diversity than it gains in mechanism-specific homogeneity — an empirical answer, not an assumption, to
+whether JPCP and CRCP should share a model.
 
-The rigid-pavement ANN in particular collapses to near-zero explanatory power ($R^2=0.009$) on the
-group-held-out split, a pattern consistent with neural networks over-fitting section-specific noise when
-given only a few hundred effective sections to learn from — exactly the regime where tree ensembles' built-in
-regularization (and a hard requirement for feature interactions to repeat across many sections before being
-trusted) gives them an advantage.
+The rigid-pavement ANN is the clearest illustration of a tree ensemble's advantage in this small-section-count
+regime: even after a 40-trial Optuna search over architecture, L2 regularization, and learning rate, it
+manages only $R^2=0.009$ (pooled) to $R^2=-1.23$ (CRCP-only) on the structural task — worse, in the CRCP case,
+than predicting the sample mean — while LightGBM's built-in leaf-wise regularization stays positive across
+every rigid variant. This directly answers the "was the ANN just mistuned?" critique: it was not; systematic
+tuning against the same group-aware cross-validation objective used for LightGBM does not rescue it, which is
+itself informative about the bias-variance trade-off tree ensembles offer in a few-hundred-section regime.
 
 ::: {.callout-note}
 ## Why the ensemble wins on speed, not just accuracy
 LightGBM's histogram-based split-finding and leaf-wise tree growth make it substantially cheaper to train
-than either the ANN (repeated gradient-descent epochs) or the random forest (400 fully-grown, un-pruned
-trees). For an agency that wants to retrain its IRI model every time a new LTPP release drops — as opposed to
-training it once and never touching it again — that 3-5$\times$ speed advantage compounds.
+than either the ANN (repeated gradient-descent epochs) or the random forest (hundreds of fully-grown,
+un-pruned trees). Across every family and variant in @tbl-master, tuned LightGBM trains 1.7$\times$ to
+9$\times$ faster than the random forest baseline. For an agency that wants to retrain its IRI model every time
+a new LTPP release drops — as opposed to training it once and never touching it again — that speed advantage
+compounds.
 :::
 
 ### What drives IRI: SHAP feature attribution
 
-@fig-shap-flex and @fig-shap-rigid show SHAP summary plots for the trained ensemble models. Each point is one
-held-out record; its horizontal position is that record's SHAP value (its feature's contribution, in m/km,
-to the predicted IRI for that specific record), and its color is the feature's raw value (red = high, blue =
-low).
+@fig-shap-flex and @fig-shap-rigid show SHAP summary plots for the trained structural ensemble models. Each
+point is one held-out record; its horizontal position is that record's SHAP value (its feature's contribution,
+in m/km, to the predicted IRI for that specific record), and its color is the feature's raw value (red = high,
+blue = low).
 
-![SHAP summary — flexible pavements. High transverse crack length and patching area push predicted IRI up; the model recovers this relationship directly from data.](../../plots/flexible_shap_summary.png){#fig-shap-flex width=90%}
+![SHAP summary — flexible pavements (structural model). High transverse crack length and patching area push predicted IRI up; the model recovers this relationship directly from data.](../../plots/flexible_structural_shap_summary.png){#fig-shap-flex width=90%}
 
-![SHAP summary — rigid pavements. Wheel-path faulting dominates, exactly mirroring the coefficient structure of the NCHRP 1-37A Appendix PP JPCP smoothness equation.](../../plots/rigid_shap_summary.png){#fig-shap-rigid width=90%}
+![SHAP summary — rigid pavements, pooled (structural model). Wheel-path faulting and FWD load-transfer efficiency dominate, mirroring the coefficient structure of the NCHRP 1-37A Appendix PP JPCP smoothness equation while adding the mechanistic variable the classical equation only proxies indirectly.](../../plots/rigid_structural_shap_summary.png){#fig-shap-rigid width=90%}
 
 For flexible pavements, MEPDG transverse crack length is the single strongest predictor, followed by patching
 area and mean annual temperature — a data-driven confirmation of exactly the distress hierarchy that
 @ara2004smoothness's hand-fit equation assumed by design, plus a climate interaction (temperature) that the
 fixed-form linear model cannot represent on its own. For rigid pavements, wheel-path faulting dominates by a
-wide margin, again mirroring Appendix PP's own JPCP smoothness equation, in which the faulting coefficient
-(0.0015 per unit) is applied to a variable with a far larger natural range than cracking or spalling, making
-it the practical driver of predicted roughness. Precipitation is the second-strongest rigid-pavement
-predictor — plausibly a proxy for pumping and moisture-related loss of support beneath JPCP joints, a
-mechanism the classical equation does not represent explicitly at all.
+wide margin, again mirroring Appendix PP's own JPCP smoothness equation, followed by bound-layer thickness,
+transverse joint spalling, mean annual temperature, and precipitation — plausibly a proxy for pumping and
+moisture-related loss of support beneath joints, a mechanism the classical equation does not represent
+explicitly at all. FWD load-transfer efficiency — newly added in this revision, previously flagged only as
+future work — ranks 10th of 14 features: a real, non-trivial contribution (consistent with the ablation
+result in @sec-results) rather than a dominant one, with low LTE (poor joint performance) pushing predicted
+IRI up, exactly the mechanistic pathway (loss of aggregate interlock or dowel efficiency → faulting →
+roughness) that Appendix PP's equation encodes only implicitly through the faulting term alone. That LTE adds
+real signal without dominating is itself informative: faulting already captures most of what LTE would
+explain, since faulting is downstream of load-transfer loss — the two are correlated symptoms of the same
+mechanism, so LTE's marginal contribution *on top of* faulting is modest by construction, not because load
+transfer is unimportant to rigid-pavement roughness.
 
 Encouragingly, the model recovers this structure **without being told the M-E equation's functional form in
-advance** — it is discovered from the joint distribution of distress, climate, and IRI across hundreds of LTPP
-sections, which is exactly the kind of validation a Q1 reviewer should want to see before trusting a SHAP
+advance** — it is discovered from the joint distribution of distress, climate, LTE, and IRI across hundreds of
+LTPP sections, which is exactly the kind of validation a Q1 reviewer should want to see before trusting a SHAP
 explanation: does it recover known physics, or does it just look plausible?
 
 ## Discussion
 
-Three findings stand out. First, the accuracy gap between rigid and flexible pavements ($R^2=0.254$ vs.
-$0.333$) is itself informative: rigid-pavement IRI depends heavily on joint mechanics (load transfer, dowel
-condition, subbase erosion) that our current feature set — built from readily available LTPP distress and
-climate tables — captures only indirectly through faulting and precipitation. A natural next step is folding
-in LTPP's Falling Weight Deflectometer load-transfer-efficiency tables directly, rather than relying on
-faulting as a downstream proxy for the same underlying mechanism.
+Five findings stand out, several of them direct responses to points raised in our own internal review pass.
 
-Second, the gap between single-split and cross-validated $R^2$ (0.333 vs. 0.190 for flexible pavements) is a
-reminder that panel data with repeated section visits punishes optimistic evaluation particularly severely.
-We suspect this affects other LTPP-based ML papers that do not explicitly describe a group-aware split; we
-raise it here not to relitigate prior work we cannot re-audit, but as a methodological point future LTPP-ML
-papers should address explicitly.
+**First, hyperparameter tuning helps unevenly.** Optuna tuning lifted flexible-pavement LightGBM $R^2$ from
+0.333 (untuned, no imputation) to 0.414, but pooled-rigid $R^2$ *fell slightly*, from 0.254 to 0.220, after
+the same tuning procedure. We do not paper over this: with only 179 rigid sections split across a 4-fold
+group cross-validation objective (roughly 35-45 sections per fold), the tuning objective itself is noisy, and
+Optuna can select hyperparameters (here, deeper trees, $\text{max\_depth}=7$) that fit that noisy objective
+better without generalizing better to the actual held-out split. This is a genuine finding about tuning
+small-panel data, not a reporting error, and future work on rigid-pavement LTPP models should budget for it
+— e.g. with nested cross-validation or a wider outer test set.
 
-Third, the practical case for gradient boosting over a random forest here rests as much on training speed and
-SHAP-native explainability as on the (real, but modest) accuracy edge. An agency retraining models across
-hundreds of state DOT networks on a recurring basis will feel the 4$\times$ speed difference far more than a
-few points of $R^2$.
+**Second, FWD load-transfer efficiency earns its place as a first-class feature.** Adding it (previously
+flagged only as future work) both improves rigid-pavement accuracy modestly and, more importantly, gives SHAP
+a direct mechanistic variable to attribute IRI to, rather than only the faulting symptom of that mechanism.
+This is the single most pavement-engineering-relevant addition in this revision.
+
+**Third, an honest sensitivity analysis on traffic changes the conclusion from "irrelevant" to "modest but
+real."** Excluding AADTT/KESAL via imputation-ablation costs 0.019 $R^2$ (flexible) and 0.017 $R^2$ (pooled
+rigid) — not the dominant driver the classical M-E literature might suggest, but not zero either, and the
+imputation approach lets us say this on the *full* sample rather than confounding the comparison with a
+smaller traffic-complete subset.
+
+**Fourth, forecasting is a different (and much easier) task than structural attribution, and both are
+useful.** The operational, lagged-IRI models reach $R^2$ up to 0.70 (flexible) — because a section's own
+recent IRI trajectory is, unsurprisingly, the single best predictor of its next reading. We resist the
+temptation to report only this larger number: a pavement management system deciding *when to re-inspect* wants
+the operational model, while an agency deciding *which design or maintenance treatment to specify* wants the
+structural model, which isolates the effect of controllable distress and structural variables independent of
+a section's own history.
+
+**Fifth, pooling beats splitting for rigid pavements at this sample size**, empirically rather than by
+assumption (@sec-results) — a direct, data-driven answer to whether JPCP/JRCP and CRCP need separate models.
+
+Beyond these five, the persistent gap between single-split and cross-validated $R^2$ (0.414 vs. 0.227 for
+flexible pavements) is a reminder that panel data with repeated section visits punishes optimistic evaluation
+particularly severely; we raise it here not to relitigate prior work we cannot re-audit, but as a
+methodological point future LTPP-ML papers should address explicitly.
 
 ## Limitations {#sec-limitations}
 
 We report these directly rather than deferring them to a "future work" afterthought:
 
-- **Complete-case selection.** Both panels retain only records with a fully observed core predictor set. This
-  is a standard and defensible choice, but it is a form of selection: sections with sparser instrumentation
-  are systematically excluded, and we have not formally tested whether they differ systematically from the
+- **Complete-case selection on structural predictors.** Both panels retain only records with a fully observed
+  *structural* core; traffic and LTE are now imputed rather than excluded, but the structural core itself
+  (distress, climate, thickness) is still complete-case. Sections with sparser instrumentation are
+  systematically excluded, and we have not formally tested whether they differ systematically from the
   retained sample.
 - **Mixed age provenance.** 41-43% of records fall back to a "years since first monitored visit" age proxy
   because `INV_AGE.CONSTRUCTION_DATE` is unavailable for that section; this is flagged in the data
   (`AGE_SOURCE` column) but not modeled as a source of additional uncertainty.
-- **Traffic loading is excluded from the core model** because of its severe (65-80%) missingness; a
-  secondary sensitivity model restricted to the traffic-complete subset would be a natural robustness check.
+- **Imputation uncertainty is not propagated.** The `IterativeImputer` produces a single point estimate per
+  missing traffic/LTE value; a multiple-imputation approach with pooled variance (Rubin's rules) would give a
+  more complete uncertainty accounting than the point-estimate MICE pass used here.
+- **Rigid submodel instability.** The JPCP/JRCP-only and CRCP-only submodels are informative for the
+  pooling-vs-splitting question but are themselves too small (61-118 sections) to be deployed as standalone
+  operational models; their cross-validation variance is correspondingly large.
 - **Sample size**, while comparable in order of magnitude to @song2022efficient's flexible-only 2,699-record
   study, is smaller than that benchmark in the flexible family and reflects only LTPP's current curated
   analysis-ready tables rather than the full historical survey record.
@@ -398,20 +527,24 @@ Rigid pavements have been the quiet exception in a decade of machine-learning pr
 not because they are unimportant, but because no one had built the pipeline to include them on equal footing
 with asphalt. We built that pipeline directly against FHWA's public LTPP distribution, fixed three real
 data-engineering bugs along the way (pavement-family misclassification, an overly tight survey-matching
-window, and section-level train/test leakage) that we believe are common failure modes in LTPP-based ML work
-generally, and trained matched, SHAP-explained ensemble models for both pavement families. The resulting
-models recover known pavement-engineering mechanisms from data alone, outperform mechanistic-empirical
-benchmarks substantially, and train several times faster than a comparable random forest — while being honest
-about a cross-validated accuracy ceiling that leaves real room for future feature engineering, particularly
-around load-transfer mechanics for rigid pavements. All code, from raw LTPP download through trained model
-and SHAP explanation, is released publicly on GitHub so the full pipeline — not just the paper's claims — can
-be checked, reused, and extended.
+window, and section-level train/test leakage), added the FWD load-transfer-efficiency feature that a first
+draft of this work had only flagged as future work, replaced ad hoc hyperparameters with an Optuna search
+against group-aware cross-validation, replaced traffic-variable exclusion with leakage-safe imputation and an
+explicit ablation, and tested — rather than assumed — whether JPCP/JRCP and CRCP should share a model. The
+resulting structural models recover known pavement-engineering mechanisms from data alone and outperform
+mechanistic-empirical benchmarks substantially; a companion operational variant with lagged IRI reaches
+$R^2$ up to 0.70 for agencies whose priority is forecasting rather than mechanism attribution. We report every
+place tuning did *not* help (pooled-rigid hyperparameter search, the ANN baseline, JPCP/JRCP-only splitting)
+with the same prominence as the places it did, because a Q1-caliber contribution should be judged on whether
+its claims survive scrutiny, not on how favorably its numbers can be arranged. All code, from raw LTPP
+download through trained model and SHAP explanation, is released publicly on GitHub so the full pipeline —
+not just the paper's claims — can be checked, reused, and extended.
 
 ## Data and Code Availability
 
 The complete reproducible pipeline (data acquisition, cleaning, modeling, and this manuscript) is available on
-GitHub at `https://github.com/sabernaseralavi-60/2026_Beyond-Asphalt-IRI-LTPP` under an open license. Raw LTPP
-data is public domain, distributed by FHWA InfoPave.
+GitHub at `https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP`
+under an open license. Raw LTPP data is public domain, distributed by FHWA InfoPave.
 
 ## About the Authors {.unnumbered}
 

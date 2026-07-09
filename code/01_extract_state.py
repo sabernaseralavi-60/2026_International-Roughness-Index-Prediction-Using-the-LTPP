@@ -110,6 +110,7 @@ def extract(db_path, state_abbr, out_dir):
         rigid_all = add_structure(cn, rigid_all, layer_types=("PC", "AC"))
         rigid_all = add_traffic_climate(cn, rigid_all)
         rigid_all = add_construction_date(cn, rigid_all)
+        rigid_all = add_fwd_lte(cn, rigid_all)
         rigid_all["STATE_ABBR"] = state_abbr
         rigid_all.to_csv(f"{out_dir}/rigid_{state_abbr}.csv", index=False)
 
@@ -170,6 +171,30 @@ def add_structure(cn, df, layer_types):
     df = df.merge(thick, on=["SHRP_ID", "STATE_CODE", "CONSTRUCTION_NO"], how="left")
     df = df.merge(subg, on=["SHRP_ID", "STATE_CODE", "CONSTRUCTION_NO"], how="left")
     return df
+
+
+def add_fwd_lte(cn, df):
+    """Falling Weight Deflectometer joint load-transfer efficiency (LTE),
+    the mechanistic variable behind rigid-pavement joint faulting that
+    Appendix PP's equation only captures indirectly. MON_DEFL_LTE carries
+    per-drop LTE readings keyed by (STATE_CODE, SHRP_ID, TEST_DATE); it has
+    no CONSTRUCTION_NO of its own, so we recover it via MON_DEFL_MASTER and
+    average to one LTE value per test date before the usual nearest-date
+    merge onto the IRI/distress panel."""
+    try:
+        lte = q(cn, "SELECT STATE_CODE, SHRP_ID, TEST_DATE, LOAD_TRANSFER_EFFICIENCY FROM MON_DEFL_LTE")
+        master = q(cn, "SELECT STATE_CODE, SHRP_ID, TEST_DATE, CONSTRUCTION_NO FROM MON_DEFL_MASTER")
+    except Exception:
+        df["LOAD_TRANSFER_EFFICIENCY"] = pd.NA
+        return df
+    if not len(lte) or not len(master):
+        df["LOAD_TRANSFER_EFFICIENCY"] = pd.NA
+        return df
+    lte_mean = lte.groupby(["STATE_CODE", "SHRP_ID", "TEST_DATE"])["LOAD_TRANSFER_EFFICIENCY"].mean().reset_index()
+    lte_mean = lte_mean.merge(master.drop_duplicates(["STATE_CODE", "SHRP_ID", "TEST_DATE"]),
+                               on=["STATE_CODE", "SHRP_ID", "TEST_DATE"], how="left")
+    lte_mean = lte_mean.rename(columns={"TEST_DATE": "SURVEY_DATE"}).dropna(subset=["CONSTRUCTION_NO"])
+    return merge_nearest(df, lte_mean, "SURVEY_DATE", ["LOAD_TRANSFER_EFFICIENCY"])
 
 
 def add_traffic_climate(cn, df):
