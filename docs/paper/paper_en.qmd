@@ -44,16 +44,27 @@ bibliography: references.bib
 csl: ieee.csl
 format:
   html:
-    theme: [cosmo, custom.scss]
+    theme:
+      light: [cosmo, custom.scss]
+      dark: [darkly, custom-dark.scss]
     toc: true
     toc-depth: 3
+    toc-location: right
     number-sections: true
     code-fold: true
     code-tools: true
+    code-copy: true
     fig-width: 7.5
     fig-height: 5
     smooth-scroll: true
-    linkcolor: "#a6216f"
+    anchor-sections: true
+    citations-hover: true
+    footnotes-hover: true
+    linkcolor: "#1F5C73"
+    grid:
+      body-width: 900px
+      sidebar-width: 250px
+      margin-width: 250px
   pdf:
     documentclass: article
     geometry: margin=1in

@@ -5,7 +5,18 @@ flexible (asphalt) and rigid (JPCP/JRCP/CRCP) pavements from the FHWA Long-Term 
 database, using an explainable gradient-boosted ensemble (LightGBM + SHAP) benchmarked against an
 MEPDG-style regression, a random forest, and a neural network.
 
-Full manuscript: [English PDF](docs/paper/paper_en.pdf) · [English HTML](docs/paper/paper_en.html) · [Persian Word](docs/paper/paper_fa.docx)
+## 📥 Downloads
+
+| File | View online | Direct download |
+|---|---|---|
+| 📄 Manuscript — English (PDF) | — | **[⬇ Download PDF](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/raw/master/docs/paper/paper_en.pdf)** |
+| 🌐 Manuscript — English (HTML) | **[View styled page](https://htmlpreview.github.io/?https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/blob/master/docs/paper/paper_en.html)** | [⬇ Download HTML](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/raw/master/docs/paper/paper_en.html) |
+| 📝 Manuscript — Persian (Word) | — | **[⬇ Download DOCX](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/raw/master/docs/paper/paper_fa.docx)** |
+| 📊 Master results table | — | [⬇ Download DOCX](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/raw/master/tables/master_lightgbm_comparison.docx) |
+
+> The "View online" link renders the HTML manuscript as an actual styled web page (via [htmlpreview.github.io](https://htmlpreview.github.io)) rather than GitHub's raw-source view. The "Download" links go straight to the file — GitHub will save it to disk (PDF/DOCX) rather than opening a preview page.
+>
+> Every other individual figure/table can be downloaded the same way: open it in [`plots/`](plots/) or [`tables/`](tables/), then use GitHub's **Download raw file** button (⬇ icon) on the file page.
 
 ## Why this exists
 

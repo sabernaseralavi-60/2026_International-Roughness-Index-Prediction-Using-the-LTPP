@@ -1,34 +1,261 @@
 /*-- scss:defaults --*/
-$body-bg: #fefefe;
-$body-color: #1a1a1a;
-$link-color: #a6216f;
-$font-family-sans-serif: "Palatino Linotype", "Book Antiqua", Georgia, serif;
-$font-family-monospace: "Fira Code", "Consolas", monospace;
-$presentation-heading-color: #1a1a1a;
-$toc-color: #a6216f;
-$code-block-bg: #f7f5f2;
+$body-bg: #FBFAF7;
+$body-color: #22262A;
+$link-color: #1F5C73;
+$font-family-serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Georgia, "Times New Roman", serif;
+$font-family-sans-serif: "Source Serif 4", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+$font-family-monospace: "JetBrains Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+$presentation-heading-color: #17323F;
+$toc-color: #1F5C73;
+$toc-active-border: #1F5C73;
+$code-block-bg: #F1EEE6;
+$code-color: #7A2E20;
+$table-border-color: #E4DFD6;
+$navbar-bg: #FBFAF7;
 
 /*-- scss:rules --*/
+:root {
+  --accent: #1F5C73;
+  --accent-warm: #B5533C;
+  --surface: #F3F0EA;
+  --surface-border: #E4DFD6;
+  --muted: #5C6570;
+}
+
 body {
-  line-height: 1.65;
+  line-height: 1.72;
+  font-size: 1.06rem;
+  letter-spacing: 0.1px;
 }
-h1, h2, h3 {
-  font-weight: 600;
+
+#quarto-content {
+  max-width: 900px;
 }
+
+::selection {
+  background: rgba(31, 92, 115, 0.18);
+}
+
+/* ---------- Headings ---------- */
+h1, h2, h3, h4 {
+  font-weight: 650;
+  color: var(--muted);
+  color: #17323F;
+  letter-spacing: -0.01em;
+}
+
+h2 {
+  margin-top: 2.6em;
+  padding-bottom: 0.35em;
+  border-bottom: 2px solid var(--surface-border);
+}
+
+h3 {
+  color: var(--accent);
+  margin-top: 1.9em;
+}
+
+/* ---------- Title block (hero) ---------- */
+#title-block-header.quarto-title-block {
+  padding: 3rem 0 2.5rem 0;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--surface-border);
+  background: linear-gradient(180deg, rgba(31, 92, 115, 0.05) 0%, rgba(251, 250, 247, 0) 100%);
+}
+
 h1.title {
-  font-size: 2.2rem;
+  font-size: 2.35rem;
+  line-height: 1.25;
+  color: #17323F;
+  font-weight: 700;
+  margin-bottom: 1.1rem;
 }
+
+.quarto-title-block::after {
+  content: "";
+  display: block;
+  width: 64px;
+  height: 4px;
+  margin-top: 1.4rem;
+  background: linear-gradient(90deg, var(--accent), var(--accent-warm));
+  border-radius: 2px;
+}
+
+.quarto-title-meta-heading {
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+}
+
+.quarto-title-authors .quarto-title-author-name {
+  font-weight: 600;
+  color: #17323F;
+}
+
+.quarto-title-authors .quarto-title-author-email a {
+  color: var(--accent);
+}
+
+#quarto-title-block .abstract {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  padding: 1.4rem 1.6rem;
+  margin-top: 1.6rem;
+}
+
+.abstract-title {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* keywords as pills */
+.keywords {
+  margin-top: 1rem;
+}
+
+/* ---------- Links ---------- */
+a {
+  color: var(--accent);
+  text-decoration-color: rgba(31, 92, 115, 0.35);
+  text-underline-offset: 3px;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+a:hover {
+  color: var(--accent-warm);
+  text-decoration-color: var(--accent-warm);
+}
+
+/* ---------- TOC ---------- */
+#TOC {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.88rem;
+}
+#TOC .toc-actions, nav[role="doc-toc"] {
+  border-left: 1px solid var(--surface-border);
+}
+nav[role="doc-toc"] ul > li > a.active {
+  color: var(--accent);
+  font-weight: 600;
+  border-left: 2px solid var(--accent);
+}
+
+/* ---------- Callouts ---------- */
 .callout {
-  border-left-width: 4px;
+  border-radius: 10px;
+  border-left-width: 5px;
+  box-shadow: 0 1px 3px rgba(23, 50, 63, 0.06);
+  overflow: hidden;
 }
+.callout-note {
+  border-left-color: var(--accent);
+}
+.callout-note .callout-header {
+  background-color: rgba(31, 92, 115, 0.08);
+}
+.callout-warning {
+  border-left-color: var(--accent-warm);
+}
+
+/* ---------- Tables ---------- */
 table {
   font-size: 0.92rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(23, 50, 63, 0.05);
 }
-figure figcaption {
+thead th {
+  background: #17323F;
+  color: #FBFAF7 !important;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.74rem;
+  letter-spacing: 0.05em;
+  border: none !important;
+}
+tbody tr:nth-child(even) {
+  background-color: var(--surface);
+}
+tbody tr:hover {
+  background-color: rgba(31, 92, 115, 0.07);
+}
+caption, .table-caption {
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ---------- Figures ---------- */
+figure {
+  margin: 2rem 0;
+  text-align: center;
+}
+figure img {
+  border-radius: 10px;
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 4px 16px rgba(23, 50, 63, 0.08);
+}
+figure figcaption, .figure-caption {
   font-style: italic;
-  color: #555;
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin-top: 0.7rem;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  max-width: 85%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ---------- Code ---------- */
+pre.sourceCode, div.sourceCode {
+  border-radius: 8px;
+  border: 1px solid var(--surface-border);
+}
+code {
+  color: var(--code-color, #7A2E20);
+}
+pre code {
+  color: inherit;
+}
+
+/* ---------- Author bio blocks ---------- */
+.author-block {
+  display: flex;
+  gap: 1.2rem;
+  align-items: flex-start;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 10px;
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1rem;
 }
 .author-block img {
-  border-radius: 6px;
-  max-width: 140px;
+  border-radius: 8px;
+  max-width: 130px;
+  box-shadow: 0 2px 8px rgba(23, 50, 63, 0.12);
+  flex-shrink: 0;
 }
+
+/* ---------- Misc ---------- */
+hr {
+  border-color: var(--surface-border);
+}
+blockquote {
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+  font-style: italic;
+}
+::-webkit-scrollbar { height: 10px; width: 10px; }
+::-webkit-scrollbar-thumb { background: var(--surface-border); border-radius: 6px; }
