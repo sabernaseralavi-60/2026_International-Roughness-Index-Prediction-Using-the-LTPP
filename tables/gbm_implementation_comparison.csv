@@ -1,0 +1,5 @@
+Pavement family,LightGBM R2,XGBoost R2,CatBoost R2
+Flexible,0.414,0.382,0.395
+"Rigid, pooled",0.22,0.21,0.163
+"Rigid, JPCP/JRCP only",-0.294,-0.325,-0.264
+"Rigid, CRCP only",0.226,0.17,0.095

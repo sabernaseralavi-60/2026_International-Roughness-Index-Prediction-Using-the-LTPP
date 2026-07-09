@@ -1,0 +1,3 @@
+Method,R2_mean,R2_std
+Single imputation (deterministic MICE),,
+Multiple imputation (5 draws),0.2241448476977645,0.01220807216727472

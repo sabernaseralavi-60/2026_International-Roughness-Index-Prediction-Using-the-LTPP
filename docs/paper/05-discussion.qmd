@@ -1,6 +1,6 @@
 # Discussion
 
-Five findings merit closer discussion.
+Six findings merit closer discussion.
 
 **Hyperparameter tuning improves performance unevenly across pavement families.** Optuna tuning raised
 flexible-pavement LightGBM $R^2$ from 0.333 (an untuned configuration without traffic/LTE imputation) to
@@ -37,8 +37,24 @@ independent of a section's own measurement history.
 assumed result (@sec-results) that directly addresses whether JPCP/JRCP and CRCP should be modeled jointly or
 separately.
 
-Beyond these five points, the gap between single-split and cross-validated $R^2$ (0.414 vs. 0.227 for flexible
+**Naive-split inflation scales with how much of the outcome the model fails to explain, not with panel
+structure alone.** @sec-results reports a controlled comparison — identical tuned hyperparameters evaluated
+under a naive and a group-aware split — across all four family/submodel configurations. The inflation ranges
+from negligible for flexible pavements (0.417 vs. 0.414) to substantial for pooled rigid pavements (0.440 vs.
+0.220) to extreme for the JPCP/JRCP-only submodel (0.355 vs. $-0.294$), tracking almost exactly the ordering
+of how little genuine variance each structural feature set explains. This is a more specific and more useful
+claim than "naive splits inflate accuracy": it predicts, and the data confirm, that the risk of leakage-driven
+inflation is greatest precisely where a model's explanatory power is weakest — the situation in which a
+naive split's ability to smuggle in section identity matters most. A weaker structural model is therefore not
+only less accurate on its own terms; it is also more vulnerable to being mistaken for a stronger one under an
+insufficiently careful evaluation protocol.
+
+Beyond these six points, the gap between single-split and cross-validated $R^2$ (0.414 vs. 0.227 for flexible
 pavements) illustrates that panel data with repeated section visits is particularly unforgiving of evaluation
 protocols that do not account for its structure. This has implications beyond the present study: work using
 LTPP or comparable longitudinal pavement datasets should report train/test splitting strategy in sufficient
-detail for this source of optimism bias to be assessed by readers.
+detail for this source of optimism bias to be assessed by readers. Two further robustness checks (@sec-results)
+support the structural model's headline numbers: a five-draw multiple-imputation ensemble reproduces the
+single-imputation results to within 0.05 $R^2$ for every family, and results are essentially unchanged across
+three modern gradient-boosting implementations, indicating that neither the imputation strategy nor the
+specific choice of ensemble library is responsible for the reported accuracy levels.

@@ -15,21 +15,31 @@ Using a section-grouped train/test split that prevents repeated visits to the sa
 appearing on both sides of a fold, the ensemble explains 41.4% of out-of-sample IRI variance for flexible
 pavements and 22.0% for pooled rigid pavements in a *structural* variant built from distress, structure, and
 climate variables alone, rising to 69.8% and 39.1%, respectively, in a companion *operational* variant that
-additionally uses each section's own recent IRI history — two models addressing two distinct engineering
-questions, reported separately rather than conflated. Traffic loading and load-transfer efficiency, imputed
-rather than excluded, are shown by ablation to contribute modestly but non-trivially (approximately 0.02
-$R^2$) to model accuracy, and pooling JPCP/JRCP and CRCP into a single rigid-pavement model is shown
-empirically to outperform fitting them separately at the present sample size.
+additionally uses each section's own recent IRI history. The two variants serve distinct engineering purposes
+and are reported separately rather than conflated: the structural model isolates the effect of physical,
+potentially controllable variables and is intended to support design and rehabilitation-effectiveness
+evaluation, while the operational model is intended for pavement management system (PMS) use in budget
+planning and inspection prioritization, where forecasting accuracy matters more than mechanism attribution.
+Traffic loading and load-transfer efficiency, imputed rather than excluded, are shown by ablation to
+contribute modestly but non-trivially (approximately 0.02 $R^2$) to model accuracy, and pooling JPCP/JRCP and
+CRCP into a single rigid-pavement model is shown empirically to outperform fitting them separately at the
+present sample size.
 
 SHAP analysis recovers, directly from data, the same distress mechanisms that decades of mechanistic-empirical
 research encoded by hand — transverse cracking and patching for flexible pavements, wheel-path faulting and
 load-transfer efficiency for rigid pavements — while additionally surfacing climate interactions that
-classical closed-form equations cannot represent. Cases in which a modeling intervention (rigid-pavement
-hyperparameter tuning, the neural-network baseline, splitting JPCP/JRCP from CRCP) did not improve performance
-are reported with the same emphasis as those that did, consistent with the view that a model's practical value
-rests on the reliability of its reported behavior, not on how favorably its results can be selectively
-presented. The complete pipeline, from raw data acquisition through the trained model and its SHAP
-explanations, is released as open-source code.
+classical closed-form equations cannot represent. A series of robustness checks accompanies the headline
+model: results are essentially unchanged across three gradient-boosting implementations (LightGBM, XGBoost,
+CatBoost) and between single- and multiple-imputation treatment of missing data, and a controlled comparison
+of naive versus group-aware train/test splitting shows that leakage-driven accuracy inflation scales with how
+much genuine variance the structural features fail to explain, rather than being a fixed quantity. Two
+candidate feature additions (base type, subgrade plasticity index) are tested and found not to improve on the
+headline feature set. Cases in which a modeling intervention (rigid-pavement hyperparameter tuning, the
+neural-network baseline, splitting JPCP/JRCP from CRCP, and the two candidate feature additions) did not
+improve performance are reported with the same emphasis as those that did, consistent with the view that a
+model's practical value rests on the reliability of its reported behavior, not on how favorably its results
+can be selectively presented. The complete pipeline, from raw data acquisition through the trained model and
+its SHAP explanations, is released as open-source code.
 
 **Keywords:** International Roughness Index, LTPP, machine learning, SHAP, pavement engineering, flexible
 pavement, rigid pavement, explainable AI

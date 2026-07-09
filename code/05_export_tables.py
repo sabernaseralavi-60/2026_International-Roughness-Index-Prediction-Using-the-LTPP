@@ -25,6 +25,9 @@ TITLES = {
     "master_lightgbm_comparison": "Table 2. LightGBM held-out R² across every pavement family and model variant",
     "flexible_structural_model_metrics": "Table 3. Structural model comparison — flexible (asphalt) pavements",
     "rigid_structural_model_metrics": "Table 4. Structural model comparison — rigid pavements, pooled",
+    "gbm_implementation_comparison": "Table 5. Structural-model R² by gradient-boosting implementation",
+    "leakage_comparison_all_families": "Table 6. Naive-split vs. group-aware-split R², same tuned hyperparameters",
+    "sensitivity_checks_all_families": "Table 7. Sensitivity checks against the headline structural model",
 }
 
 SHORT_MODEL_NAMES = {
@@ -37,7 +40,8 @@ SHORT_MODEL_NAMES = {
 # Columns kept for the wide *_model_metrics tables (rest stay in the CSV).
 METRICS_DISPLAY_COLS = ["Model", "R2", "RMSE", "Train_time_s", "Speedup_vs_RF",
                          "CV_R2_mean", "CV_R2_std"]
-LANDSCAPE_PATTERNS = ("_model_metrics", "master_lightgbm_comparison", "all_variants_metrics")
+LANDSCAPE_PATTERNS = ("_model_metrics", "master_lightgbm_comparison", "all_variants_metrics",
+                       "sensitivity_checks_all_families")
 
 
 def export_docx(csv_path):

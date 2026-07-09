@@ -1,0 +1,5 @@
+Pavement family,Naive-split R2,Group-aware R2,Inflation
+Flexible,0.417,0.414,0.003
+"Rigid, pooled",0.44,0.22,0.22
+"Rigid, JPCP/JRCP only",0.355,-0.294,0.649
+"Rigid, CRCP only",0.365,0.226,0.139

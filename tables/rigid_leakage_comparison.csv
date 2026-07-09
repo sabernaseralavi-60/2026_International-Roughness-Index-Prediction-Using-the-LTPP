@@ -1,0 +1,3 @@
+Split,R2,R2_inflation
+Naive row-level (ignores repeated visits),0.4397009561117856,0.2195293171630356
+Group-aware (held-out sections),0.22017163894875003,0.0

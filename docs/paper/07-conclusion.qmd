@@ -19,15 +19,23 @@ for flexible pavements, joint faulting and load-transfer efficiency for rigid pa
 pavement engineering research established by hand, while additionally identifying climate interactions that
 fixed-coefficient equations cannot represent.
 
-Three further results have direct implications for how LTPP data is used in pavement performance modeling.
-First, evaluation protocol affects reported accuracy as much as model choice: a train/test split that does not
-account for LTPP's repeated-visit panel structure can substantially overstate accuracy, and reporting
-splitting strategy in sufficient detail for this to be assessed should be standard practice in LTPP-based
+Four further results have direct implications for how LTPP data is used in pavement performance modeling.
+First, evaluation protocol affects reported accuracy as much as model choice, and its effect is not uniform:
+a controlled comparison holding hyperparameters fixed shows that a train/test split ignoring LTPP's
+repeated-visit panel structure inflates $R^2$ by an amount that scales with how much genuine variance the
+structural features fail to explain — negligibly for flexible pavements, substantially for pooled rigid
+pavements, and by more than half a point of $R^2$ for the least-explained rigid submodel. Reporting splitting
+strategy in sufficient detail for this to be assessed should be standard practice in LTPP-based
 machine-learning studies. Second, traffic loading and load-transfer efficiency each contribute measurably but
 modestly to model accuracy once properly imputed, indicating that neither should be excluded for missingness
 nor treated as the dominant explanatory variable. Third, at the sample sizes currently available in LTPP, a
 single pooled rigid-pavement model spanning JPCP, JRCP, and CRCP — distinguished by a pavement-type indicator
-— generalizes better than separate models fit to each sub-family, despite their differing distress mechanisms.
+— generalizes better than separate models fit to each sub-family, despite their differing distress mechanisms,
+though this is treated as a sample-size-driven choice to be revisited as more rigid-pavement data accumulates
+rather than a claim that the sub-families share identical deterioration mechanics. Fourth, the reported
+accuracy is not an artifact of a particular gradient-boosting library or imputation procedure: results are
+essentially unchanged across three modern gradient-boosting implementations and across single- versus
+multiple-imputation treatment of missing traffic and load-transfer data.
 
 These findings have practical relevance for both highway agencies and the pavement engineering research
 community. Agencies prioritizing maintenance across mixed flexible and rigid networks can apply a common

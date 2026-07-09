@@ -118,6 +118,99 @@ a new LTPP release drops — as opposed to training it once and never touching i
 compounds.
 :::
 
+## Robustness and sensitivity checks
+
+Five further checks accompany the headline structural model, addressing gradient-boosting implementation
+choice, split methodology, age provenance, imputation method, and candidate feature additions in turn.
+
+**Gradient-boosting implementation.** @tbl-gbm-compare compares LightGBM against XGBoost [@chen2016xgboost]
+and CatBoost [@prokhorenkova2018catboost], each independently tuned with a 25-trial Optuna search against the
+same group-aware cross-validation objective as the headline model.
+
+```{python}
+#| label: tbl-gbm-compare
+#| tbl-cap: "Structural-model R² by gradient-boosting implementation."
+#| echo: false
+import pandas as pd
+pd.read_csv("../../tables/gbm_implementation_comparison.csv")
+```
+
+LightGBM is the best- or near-best-performing implementation in three of four cases, and is within 0.03-0.06
+$R^2$ of the best alternative in the fourth (JPCP/JRCP-only, where CatBoost edges ahead in an already
+low-accuracy regime). The choice among modern gradient-boosting implementations does not change any of this
+study's conclusions.
+
+**Split methodology, and why its effect varies by family.** @tbl-leakage reports, for each family, the same
+Optuna-tuned hyperparameters evaluated under a naive row-level split and under the group-aware split used
+throughout this study, isolating the contribution of splitting strategy alone from any confound with
+hyperparameter selection.
+
+```{python}
+#| label: tbl-leakage
+#| tbl-cap: "Naive-split vs. group-aware-split R², same tuned hyperparameters."
+#| echo: false
+import pandas as pd
+pd.read_csv("../../tables/leakage_comparison_all_families.csv")
+```
+
+The inflation from a naive split is not constant: it is negligible for flexible pavements (0.417 vs. 0.414)
+but substantial for rigid pavements, and largest of all for the JPCP/JRCP-only submodel (0.355 vs. -0.294, an
+inflation of 0.649 $R^2$) — precisely the configuration whose structural feature set explains the least
+genuine variance. This is consistent with a specific mechanism rather than a generic warning: when a naive
+split allows repeated visits of the same section into both training and test data, the model can recover a
+section's persistent, unmeasured characteristics from its training-set visits and apply that section-specific
+signature to held-out visits of the *same* section. That recovery is most profitable, and therefore produces
+the largest apparent accuracy gain, exactly where the measured covariates explain the smallest share of true
+variance, since more of the outcome is then attributable to persistent section identity that only a naive
+split allows to leak through. A well-tuned model evaluated on a well-explained outcome (flexible pavements)
+has comparatively little unexplained section-specific variance left for a naive split to exploit; a model
+facing a poorly-explained outcome (JPCP/JRCP structural roughness) has a great deal, and a naive split
+rewards memorizing it. This is a more specific and testable claim than the coarser observation that an early,
+less-regularized configuration of the flexible-pavement model showed a large naive-vs-grouped gap (0.52 vs.
+0.33): leakage-driven inflation should scale with the fraction of outcome variance the structural features
+fail to explain, a pattern @tbl-leakage confirms across four independently-tuned models spanning a wide range
+of explanatory power.
+
+**Age provenance, imputation method, and candidate feature additions.** @tbl-sensitivity summarizes three
+further checks against the headline structural model.
+
+```{python}
+#| label: tbl-sensitivity
+#| tbl-cap: "Sensitivity checks against the headline structural model (full detail in tables/sensitivity_checks_all_families.csv)."
+#| echo: false
+import pandas as pd
+df = pd.read_csv("../../tables/sensitivity_checks_all_families.csv")
+compact = pd.DataFrame({
+    "Pavement family": df["Pavement family"].str.replace("Rigid, JPCP/JRCP only", "Rigid, JPCP only", regex=False),
+    "Headline R2": df["Headline R2"],
+    "Age-verified (N)": [f"{r:.2f} ({n})" for r, n in
+                          zip(df["Age-verified-only R2"], df["Age-verified N sections"])],
+    "Multi-imputation": [f"{m:.2f}±{s:.2f}" for m, s in
+                          zip(df["Multi-imputation R2 mean"], df["Multi-imputation R2 std"])],
+    "Ext. features": df["Extended-features R2"],
+})
+compact
+```
+
+Restricting to records with a verified `INV_AGE.CONSTRUCTION_DATE` (excluding the age-proxy fallback) leaves
+only 19-61 sections per family — too few for a stable held-out estimate, and the resulting $R^2$ values swing
+widely, including strongly negative, in both directions relative to the full-sample headline figure. We read
+this as a sample-size artifact of the restriction itself rather than evidence that the age proxy is
+unreliable: with a test set of 4-12 sections, a handful of atypical records can dominate $R^2$. A dedicated
+larger sample with universal construction-date coverage would be needed to test the age proxy's effect
+directly. Multiple imputation, in contrast, gives a clear and reassuring answer: a five-draw stochastic
+multiple-imputation ensemble produces held-out $R^2$ within 0.003-0.05 of the single-imputation pipeline used
+throughout, for every family, with the largest discrepancy (CRCP-only, $\pm0.038$ SD) occurring in the
+family with the fewest sections. The single-pass MICE approach is not a material source of uncertainty
+relative to sampling variability at these sample sizes. Finally, adding a binary base-type indicator
+(granular vs. treated/stabilized base) and subgrade plasticity index to the structural feature set *reduces*
+held-out $R^2$ in every family (e.g., flexible: 0.414 → 0.346), rather than improving it. Plasticity index is
+populated for only 17-18% of records nationally, and imputing a variable at that missingness level appears to
+introduce more noise than signal once passed through the same training-fold-only imputer used for traffic and
+LTE; the binary base-type indicator, while fully observed, does not compensate. We report this as a genuine
+negative result: at least for these two candidate variables under this imputation strategy, expanding the
+structural feature set beyond the headline set does not improve on it.
+
 ## What drives IRI: SHAP feature attribution
 
 @fig-shap-flex and @fig-shap-rigid show SHAP summary plots for the trained structural ensemble models. Each
@@ -145,6 +238,22 @@ adds real signal without dominating is itself informative: faulting already capt
 explain, since faulting is downstream of load-transfer loss — the two are correlated symptoms of the same
 mechanism, so LTE's marginal contribution *on top of* faulting is modest by construction, not because load
 transfer is unimportant to rigid-pavement roughness.
+
+The two climate variables warrant a more mechanistic reading than "climate matters." For flexible pavements,
+mean annual temperature interacts with cracking rather than substituting for it in the SHAP plot (@fig-shap-flex):
+its effect is concentrated among records that already carry non-trivial transverse crack length, consistent
+with the well-established sensitivity of asphalt binder stiffness to temperature — a colder climate embrittles
+the binder and accelerates thermal (transverse) cracking for a given traffic and structural exposure, so
+temperature acts as an effect modifier on the crack-length–IRI relationship rather than an independent driver.
+For rigid pavements, precipitation's contribution is concentrated among high-faulting records, which is the
+pattern implied by the classical erosion mechanism underlying pumping: water that infiltrates through joints
+or shoulders erodes fines from the base or subgrade, and repeated heavy axle loads pump the resulting slurry
+out from under the slab, progressively reducing support directly beneath the joint and increasing differential
+deflection across it. This is precisely the moisture-related loss-of-support mechanism that the M-E site
+factor $SF = \text{Age} \times (1+FI) \times (1+P_{200})/10^6$ [@ara2004smoothness] was constructed to
+proxy in aggregate rather than represent as a direct interaction with faulting; the SHAP-based model recovers
+the interaction directly from the joint distribution of precipitation and faulting rather than through a
+pre-specified multiplicative form.
 
 Notably, the model recovers this structure **without being given the M-E equation's functional form in
 advance** — it is discovered from the joint distribution of distress, climate, LTE, and IRI across hundreds of

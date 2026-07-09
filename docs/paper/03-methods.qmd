@@ -83,7 +83,7 @@ assuming an answer.
 ## Modeling and evaluation
 
 For each pavement family (and, for rigid pavements, each of the unified/JPCP-only/CRCP-only groupings) we
-compare four models on identical train/test splits and identical predictor sets:
+compare the following models on identical train/test splits and identical predictor sets:
 
 1. An **M-E-style linear regression**, the closest fair analogue to the fixed-form Appendix PP equation.
 2. A **random forest** [@breiman2001random] (400 trees).
@@ -96,8 +96,14 @@ compare four models on identical train/test splits and identical predictor sets:
    its own Optuna search (40 trials) over tree depth, leaf count, learning rate, subsampling, and L1/L2
    regularization, and SHAP [@lundberg2017unified] used to explain the final tuned model.
 
-All four models, including the linear benchmark, are wrapped in the same imputation pipeline for a fair
-comparison on identical data.
+For the primary structural variant, two additional gradient-boosting implementations are included for the
+headline model comparison: **XGBoost** [@chen2016xgboost] and **CatBoost** [@prokhorenkova2018catboost], each
+tuned with its own 25-trial Optuna search against the same group-aware cross-validation objective. This tests
+whether the specific choice of gradient-boosting implementation, rather than gradient boosting as a model
+class, affects the study's conclusions.
+
+All models, including the linear benchmark, are wrapped in the same imputation pipeline for a fair comparison
+on identical data.
 
 LTPP is a *panel*: the same physical section is re-surveyed many times (a median of 4-9 times per section in
 this data, up to 82 times for the most frequently monitored sections). A naive random row-level train/test
@@ -106,18 +112,32 @@ memorize section-specific characteristics and inflating reported $R^2$. We inste
 grouped by section ID (`SHRP_ID`), holding out 20% of *sections* — not rows — entirely, and additionally
 report 5-fold group cross-validated $R^2$ for the ensemble model as a variance-aware robustness check; the
 same group-aware cross-validation is used as the Optuna objective so hyperparameter selection itself cannot
-leak across sections. This distinction is not a minor implementation detail: switching from a naive to a
-group-aware split changes the flexible-pavement ensemble's held-out $R^2$ from 0.52 to 0.33, a difference
-large enough to alter a study's headline conclusion, and it is plausible that comparable panel-structure
-leakage affects other LTPP-based machine-learning studies that do not report their splitting strategy in
-sufficient detail to assess it.
+leak across sections. To quantify rather than only assert the effect of this choice, @sec-results reports the
+*same* tuned hyperparameters evaluated under both a naive and a group-aware split, isolating the contribution
+of splitting strategy alone from any confound with hyperparameter selection.
+
+Three further checks accompany the primary structural model. First, an **age-provenance sensitivity
+analysis** refits the model on the subset of records with a verified `INV_AGE.CONSTRUCTION_DATE` only
+(excluding the "years since first monitored visit" proxy used for the remainder), to test whether the age
+proxy materially changes model behavior. Second, an **imputation sensitivity analysis** compares the
+single-imputation pipeline used throughout against a five-draw stochastic multiple-imputation ensemble
+(`IterativeImputer` with `sample_posterior=True` and a distinct random seed per draw), reporting the mean and
+standard deviation of held-out $R^2$ across draws as a check on the point-estimate MICE approach used
+elsewhere. Third, an **extended-features check** adds two candidate structural predictors not included in the
+headline feature set — a binary base-type indicator (granular vs. treated/stabilized base, derived from the
+GPS-1/GPS-2 experiment number) and subgrade plasticity index (imputed, as it is populated for only 17-18% of
+records nationally) — and reports whether including them improves on the headline structural model rather
+than assuming that it would.
 
 Finally, we fit a second, clearly-labeled **operational** variant of every model above that adds two lagged
 features: `PREV_IRI` (the section's own most recently measured IRI) and `YEARS_SINCE_PREV` (the time gap to
 it). This reframes the modeling task from estimating roughness from current distress and site conditions (the
-*structural* model, above, suited to understanding *why* a section is rough) to forecasting roughness from a
-section's own recent trajectory plus its distress state (the *operational* model, suited to a pavement
-management system deciding what to inspect next). Because IRI is strongly autocorrelated within a section, the
-operational variant's $R^2$ is substantially higher, as expected; both variants are reported side by side
-rather than collapsing to the higher number, and the distinction is discussed explicitly in @sec-results so
+*structural* model, above, which isolates the effect of physical and potentially controllable variables and
+is suited to design and rehabilitation-effectiveness evaluation, where understanding *why* a section is rough
+is the objective) to forecasting roughness from a section's own recent trajectory plus its distress state (the
+*operational* model, suited to pavement management system (PMS) use in budget planning and inspection
+prioritization, where forecasting accuracy is the objective). Because IRI is strongly autocorrelated within a
+section, the operational variant's $R^2$ is substantially higher, as expected; both variants are reported side
+by side rather than collapsing to the higher number, and the distinction is discussed explicitly in
+@sec-results so
 that a given $R^2$ value is always attributable to a specific, named task.

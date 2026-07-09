@@ -9,13 +9,24 @@ This study has the following limitations, which should be considered when interp
   formally tested.
 - **Mixed age provenance.** 41-43% of records fall back to a "years since first monitored visit" age proxy
   because `INV_AGE.CONSTRUCTION_DATE` is unavailable for that section; this is flagged in the data
-  (`AGE_SOURCE` column) but not modeled as an additional source of uncertainty.
-- **Imputation uncertainty is not propagated.** The `IterativeImputer` produces a single point estimate for
-  each missing traffic/LTE value; a multiple-imputation approach with pooled variance (Rubin's rules) would
-  provide a more complete accounting of uncertainty than the single-pass MICE approach used here.
-- **Rigid submodel instability.** The JPCP/JRCP-only and CRCP-only submodels are informative for the
-  pooling-versus-splitting comparison but are themselves too small (61-118 sections) to be deployed as
-  standalone operational models; their cross-validation variance is correspondingly large.
+  (`AGE_SOURCE` column). We attempted to test its effect directly by refitting the structural model on the
+  verified-construction-date subset alone (@sec-results), but that subset retains only 19-61 sections per
+  family — too few for a stable estimate, and the resulting $R^2$ values are not interpretable as evidence
+  either way. Resolving this properly would require either a larger verified-age subsample or an explicit
+  model of age-source-related measurement error, neither of which is attempted here.
+- **Imputation uncertainty is largely, but not completely, addressed.** A five-draw stochastic
+  multiple-imputation check (@sec-results) shows the single-imputation `IterativeImputer` pipeline used
+  throughout reproduces held-out $R^2$ within 0.003-0.05 across all four families, which is reassuring but
+  does not amount to a formal Rubin's-rules variance decomposition of a fitted coefficient; no such
+  decomposition is attempted for a black-box ensemble model in this study.
+- **Rigid submodel instability, and pooling as a sample-size-driven choice rather than a permanent one.** The
+  JPCP/JRCP-only and CRCP-only submodels are informative for the pooling-versus-splitting comparison but are
+  themselves too small (61-118 sections) to be deployed as standalone operational models; their
+  cross-validation variance is correspondingly large. The pooled rigid-pavement model is therefore adopted
+  because it is the better-performing choice *at LTPP's current rigid-pavement sample size*, not because
+  JPCP/JRCP and CRCP are assumed to share identical deterioration mechanics. As additional LTPP monitoring
+  cycles accumulate and sub-family sample sizes grow, the pooling-versus-splitting comparison in
+  @sec-results should be revisited, and separate models may become preferable.
 - **Sample size**, while comparable in order of magnitude to @song2022efficient's flexible-only 2,699-record
   study, is smaller than that benchmark for the flexible family and reflects only LTPP's current curated
   analysis-ready tables rather than the full historical survey record.
