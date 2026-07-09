@@ -468,8 +468,8 @@ window.Quarto = {
 <p>That silence about rigid pavements is not a minor omission. Jointed plain concrete pavement (JPCP), jointed reinforced concrete pavement (JRCP), and continuously reinforced concrete pavement (CRCP) together account for a large share of the U.S. Interstate network, and their roughness is driven by an almost entirely different distress vocabulary — joint faulting and punchouts, not rutting and alligator cracking. The NCHRP 1-37A Appendix PP smoothness model <span class="citation" data-cites="ara2004smoothness"><a href="references.html#ref-ara2004smoothness" role="doc-biblioref">[2]</a></span>, still in active use inside AASHTOWare Pavement ME today, handles rigid pavements the old-fashioned way: a single fixed-form linear equation, <span class="math display">\[
 \text{IRI} = \text{IRI}_0 + 0.013\cdot TC + 0.007\cdot SPALL + 0.005\cdot PATCH + 0.0015\cdot TFAULT + 0.4\cdot SF,
 \]</span> fit once, decades ago, and never re-learned from the much larger and more diverse LTPP dataset that has accumulated since. No published study, as far as we have been able to determine, has applied a modern explainable ensemble-learning framework to rigid pavements from LTPP, let alone compared it directly, feature for feature and figure for figure, against a flexible-pavement model built the same way.</p>
-<p>This paper does exactly that. We built a single, reproducible pipeline — documented in full in <a href="03-methods.html" class="quarto-xref"><span>Chapter 3</span></a>, and released as open code — that pulls flexible <strong>and</strong> rigid pavement records from the same LTPP release, engineers a comparable feature set for each, and trains matched gradient-boosted ensemble models with SHAP explanations for both. Along the way we ran into, and fixed, three real data-engineering problems (a pavement-family mislabeling bug, a too-tight survey-matching window, and a subtle train/test leakage bug) that we describe openly in <a href="03-methods.html" class="quarto-xref"><span>Chapter 3</span></a> and <a href="06-limitations.html" class="quarto-xref"><span>Chapter 6</span></a>, because how a dataset gets built is as much a part of the scientific record as what the model finds.</p>
-<p>Our contributions are five-fold:</p>
+<p>This study addresses that gap directly. We construct a single, reproducible pipeline — documented in full in <a href="03-methods.html" class="quarto-xref"><span>Chapter 3</span></a> and released as open code — that extracts flexible <strong>and</strong> rigid pavement records from the same LTPP release, engineers a comparable feature set for each, and trains matched gradient-boosted ensemble models with SHAP explanations for both. Assembling this pipeline surfaced three data-engineering pitfalls with direct consequences for reported accuracy — pavement-family misclassification from an ambiguous categorical field, an overly narrow window for matching distress surveys to profile runs, and section-level train/test leakage in panel data with repeated visits. We document how each was identified and corrected in <a href="03-methods.html" class="quarto-xref"><span>Chapter 3</span></a> and <a href="06-limitations.html" class="quarto-xref"><span>Chapter 6</span></a>, since these failure modes are plausible in other LTPP-based studies that do not report their data-construction and splitting choices in comparable detail.</p>
+<p>The contributions of this work are five-fold:</p>
 <ol type="1">
 <li><strong>A reproducible, from-scratch LTPP extraction pipeline</strong> that downloads directly from FHWA’s public Standard Data Release distribution, requires no manual portal interaction, and assembles matched flexible and rigid pavement panels with distress, structure, climate, traffic, and — newly — Falling Weight Deflectometer joint load-transfer-efficiency covariates.</li>
 <li><strong>The first (to our knowledge) explainable ensemble-learning IRI model for rigid LTPP pavements</strong>, benchmarked identically to a companion flexible-pavement model, with hyperparameters selected by a group-aware Optuna search rather than fixed by hand.</li>
@@ -1011,33 +1011,35 @@ window.Quarto = {
 <span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>explainable ensemble-learning framework to rigid pavements from LTPP, let alone compared it directly, feature</span>
 <span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>for feature and figure for figure, against a flexible-pavement model built the same way.</span>
 <span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>This paper does exactly that. We built a single, reproducible pipeline — documented in full in</span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>@sec-methods, and released as open code — that pulls flexible **and** rigid pavement records from the same</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>This study addresses that gap directly. We construct a single, reproducible pipeline — documented in full in</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>@sec-methods and released as open code — that extracts flexible **and** rigid pavement records from the same</span>
 <span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>LTPP release, engineers a comparable feature set for each, and trains matched gradient-boosted ensemble</span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>models with SHAP explanations for both. Along the way we ran into, and fixed, three real data-engineering</span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>problems (a pavement-family mislabeling bug, a too-tight survey-matching window, and a subtle train/test</span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>leakage bug) that we describe openly in @sec-methods and @sec-limitations, because how a dataset gets built</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>is as much a part of the scientific record as what the model finds.</span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>Our contributions are five-fold:</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>models with SHAP explanations for both. Assembling this pipeline surfaced three data-engineering pitfalls with</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>direct consequences for reported accuracy — pavement-family misclassification from an ambiguous categorical</span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>field, an overly narrow window for matching distress surveys to profile runs, and section-level train/test</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>leakage in panel data with repeated visits. We document how each was identified and corrected in @sec-methods</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>and @sec-limitations, since these failure modes are plausible in other LTPP-based studies that do not report</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>their data-construction and splitting choices in comparable detail.</span>
 <span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**A reproducible, from-scratch LTPP extraction pipeline** that downloads directly from FHWA's public</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>   Standard Data Release distribution, requires no manual portal interaction, and assembles matched flexible</span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>   and rigid pavement panels with distress, structure, climate, traffic, and — newly — Falling Weight</span>
-<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>   Deflectometer joint load-transfer-efficiency covariates.</span>
-<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**The first (to our knowledge) explainable ensemble-learning IRI model for rigid LTPP pavements**,</span>
-<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>   benchmarked identically to a companion flexible-pavement model, with hyperparameters selected by a</span>
-<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a>   group-aware Optuna search rather than fixed by hand.</span>
-<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**An honest, section-grouped evaluation** that reveals — and corrects for — the same kind of train/test</span>
-<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>   leakage that inflates reported accuracy in several prior LTPP-based ML studies when repeated visits to the</span>
-<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a>   same physical section are split naively.</span>
-<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**A leakage-safe treatment of sparse-but-important covariates**: rather than dropping traffic loading and</span>
-<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>   load-transfer efficiency for missingness, we impute them with a training-fold-only <span class="in">`IterativeImputer`</span> and</span>
-<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a>   directly quantify their marginal contribution by ablation, rather than either ignoring them or silently</span>
-<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>   shrinking the sample to a traffic-complete subset.</span>
-<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**An empirical test of whether JPCP/JRCP and CRCP should share a model**, rather than an assumed answer:</span>
-<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>   we show that pooling outperforms splitting at LTPP's current rigid-pavement sample size, and report the</span>
-<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a>   split submodels' instability directly.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>The contributions of this work are five-fold:</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="ss">1. </span>**A reproducible, from-scratch LTPP extraction pipeline** that downloads directly from FHWA's public</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>   Standard Data Release distribution, requires no manual portal interaction, and assembles matched flexible</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>   and rigid pavement panels with distress, structure, climate, traffic, and — newly — Falling Weight</span>
+<span id="cb1-57"><a href="#cb1-57" aria-hidden="true" tabindex="-1"></a>   Deflectometer joint load-transfer-efficiency covariates.</span>
+<span id="cb1-58"><a href="#cb1-58" aria-hidden="true" tabindex="-1"></a><span class="ss">2. </span>**The first (to our knowledge) explainable ensemble-learning IRI model for rigid LTPP pavements**,</span>
+<span id="cb1-59"><a href="#cb1-59" aria-hidden="true" tabindex="-1"></a>   benchmarked identically to a companion flexible-pavement model, with hyperparameters selected by a</span>
+<span id="cb1-60"><a href="#cb1-60" aria-hidden="true" tabindex="-1"></a>   group-aware Optuna search rather than fixed by hand.</span>
+<span id="cb1-61"><a href="#cb1-61" aria-hidden="true" tabindex="-1"></a><span class="ss">3. </span>**An honest, section-grouped evaluation** that reveals — and corrects for — the same kind of train/test</span>
+<span id="cb1-62"><a href="#cb1-62" aria-hidden="true" tabindex="-1"></a>   leakage that inflates reported accuracy in several prior LTPP-based ML studies when repeated visits to the</span>
+<span id="cb1-63"><a href="#cb1-63" aria-hidden="true" tabindex="-1"></a>   same physical section are split naively.</span>
+<span id="cb1-64"><a href="#cb1-64" aria-hidden="true" tabindex="-1"></a><span class="ss">4. </span>**A leakage-safe treatment of sparse-but-important covariates**: rather than dropping traffic loading and</span>
+<span id="cb1-65"><a href="#cb1-65" aria-hidden="true" tabindex="-1"></a>   load-transfer efficiency for missingness, we impute them with a training-fold-only <span class="in">`IterativeImputer`</span> and</span>
+<span id="cb1-66"><a href="#cb1-66" aria-hidden="true" tabindex="-1"></a>   directly quantify their marginal contribution by ablation, rather than either ignoring them or silently</span>
+<span id="cb1-67"><a href="#cb1-67" aria-hidden="true" tabindex="-1"></a>   shrinking the sample to a traffic-complete subset.</span>
+<span id="cb1-68"><a href="#cb1-68" aria-hidden="true" tabindex="-1"></a><span class="ss">5. </span>**An empirical test of whether JPCP/JRCP and CRCP should share a model**, rather than an assumed answer:</span>
+<span id="cb1-69"><a href="#cb1-69" aria-hidden="true" tabindex="-1"></a>   we show that pooling outperforms splitting at LTPP's current rigid-pavement sample size, and report the</span>
+<span id="cb1-70"><a href="#cb1-70" aria-hidden="true" tabindex="-1"></a>   split submodels' instability directly.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 <footer class="footer">

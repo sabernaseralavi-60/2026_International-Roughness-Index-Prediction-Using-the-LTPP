@@ -113,35 +113,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 }</script>
 <style>html{ scroll-behavior: smooth; }</style>
 
-  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
-
-<script type="text/javascript">
-const typesetMath = (el) => {
-  if (window.MathJax) {
-    // MathJax Typeset
-    window.MathJax.typeset([el]);
-  } else if (window.katex) {
-    // KaTeX Render
-    var mathElements = el.getElementsByClassName("math");
-    var macros = [];
-    for (var i = 0; i < mathElements.length; i++) {
-      var texText = mathElements[i].firstChild;
-      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
-        window.katex.render(texText.data, mathElements[i], {
-          displayMode: mathElements[i].classList.contains('display'),
-          throwOnError: false,
-          macros: macros,
-          fleqn: false
-        });
-      }
-    }
-  }
-}
-window.Quarto = {
-  typesetMath
-};
-</script>
 
 </head>
 
@@ -448,7 +419,10 @@ window.Quarto = {
 </header>
 
 
-<p>Rigid pavements have been the quiet exception in a decade of machine-learning progress on IRI prediction — not because they are unimportant, but because no one had built the pipeline to include them on equal footing with asphalt. We built that pipeline directly against FHWA’s public LTPP distribution, fixed three real data-engineering bugs along the way (pavement-family misclassification, an overly tight survey-matching window, and section-level train/test leakage), added the FWD load-transfer-efficiency feature that a first draft of this work had only flagged as future work, replaced ad hoc hyperparameters with an Optuna search against group-aware cross-validation, replaced traffic-variable exclusion with leakage-safe imputation and an explicit ablation, and tested — rather than assumed — whether JPCP/JRCP and CRCP should share a model. The resulting structural models recover known pavement-engineering mechanisms from data alone and outperform mechanistic-empirical benchmarks substantially; a companion operational variant with lagged IRI reaches <span class="math inline">\(R^2\)</span> up to 0.70 for agencies whose priority is forecasting rather than mechanism attribution. We report every place tuning did <em>not</em> help (pooled-rigid hyperparameter search, the ANN baseline, JPCP/JRCP-only splitting) with the same prominence as the places it did, because a Q1-caliber contribution should be judged on whether its claims survive scrutiny, not on how favorably its numbers can be arranged. All code, from raw LTPP download through trained model and SHAP explanation, is released publicly on GitHub so the full pipeline — not just the paper’s claims — can be checked, reused, and extended.</p>
+<p>Rigid pavements have remained on the periphery of machine-learning research on IRI prediction, not because they are of lesser practical importance, but because no prior study has extended the explainable ensemble-learning approach developed for asphalt pavements to JPCP, JRCP, and CRCP under a comparable, jointly benchmarked framework. This study closes that gap using a reproducible pipeline built directly against the FHWA LTPP Standard Data Release, spanning 1,552 flexible-pavement and 1,693 rigid-pavement records across the U.S. and Canadian LTPP network.</p>
+<p>An Optuna-tuned gradient-boosted ensemble, evaluated under a section-grouped train/test split that prevents repeated visits to the same physical pavement from inflating reported accuracy, explains 41.4% of out-of-sample IRI variance for flexible pavements and 22.0% for pooled rigid pavements using distress, structure, and climate variables alone, rising to 69.8% and 39.1%, respectively, when each section’s own recent IRI history is included as an additional predictor. In both pavement families, the ensemble model substantially outperforms a mechanistic-empirical-style linear regression and trains several times faster than a comparably accurate random forest. SHAP-based interpretation recovers, without being given the functional form of any mechanistic-empirical equation, the same distress mechanisms — transverse cracking and patching for flexible pavements, joint faulting and load-transfer efficiency for rigid pavements — that decades of pavement engineering research established by hand, while additionally identifying climate interactions that fixed-coefficient equations cannot represent.</p>
+<p>Three further results have direct implications for how LTPP data is used in pavement performance modeling. First, evaluation protocol affects reported accuracy as much as model choice: a train/test split that does not account for LTPP’s repeated-visit panel structure can substantially overstate accuracy, and reporting splitting strategy in sufficient detail for this to be assessed should be standard practice in LTPP-based machine-learning studies. Second, traffic loading and load-transfer efficiency each contribute measurably but modestly to model accuracy once properly imputed, indicating that neither should be excluded for missingness nor treated as the dominant explanatory variable. Third, at the sample sizes currently available in LTPP, a single pooled rigid-pavement model spanning JPCP, JRCP, and CRCP — distinguished by a pavement-type indicator — generalizes better than separate models fit to each sub-family, despite their differing distress mechanisms.</p>
+<p>These findings have practical relevance for both highway agencies and the pavement engineering research community. Agencies prioritizing maintenance across mixed flexible and rigid networks can apply a common modeling framework rather than maintaining separate tools built on incompatible assumptions, selecting between the structural and operational model variants according to whether the underlying question is diagnostic (identifying what is driving roughness) or predictive (determining when a section should next be inspected). For the research community, the complete pipeline — from raw data acquisition through model training and SHAP explanation — is released as open-source code, allowing the reported results to be verified, extended to future LTPP releases, and adapted to additional structural or sensor-derived features. The limitations discussed in <a href="06-limitations.html" class="quarto-xref"><span>Chapter 6</span></a>, particularly the sample size available for rigid pavements and reliance on a single LTPP release, motivate a natural direction for future work: revisiting this framework as additional LTPP monitoring cycles and Falling Weight Deflectometer coverage accumulate, and incorporating structural response data beyond load-transfer efficiency, such as full deflection basins, as a further mechanistic input to explainable IRI prediction.</p>
 <section id="data-and-code-availability" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="data-and-code-availability"><span class="header-section-number">7.1</span> Data and Code Availability</h2>
 <p>The complete reproducible pipeline (data acquisition, cleaning, modeling, and this manuscript) is available on GitHub at <code>https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP</code> under an open license. Raw LTPP data is public domain, distributed by FHWA InfoPave.</p>
@@ -937,28 +911,54 @@ window.Quarto = {
 </nav><div class="modal fade" id="quarto-embedded-source-code-modal" tabindex="-1" aria-labelledby="quarto-embedded-source-code-modal-label" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="quarto-embedded-source-code-modal-label">Source Code</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="">
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-shortcodes="false"><pre class="sourceCode markdown code-with-copy"><code class="sourceCode markdown"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu"># Conclusion</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>Rigid pavements have been the quiet exception in a decade of machine-learning progress on IRI prediction —</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>not because they are unimportant, but because no one had built the pipeline to include them on equal footing</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>with asphalt. We built that pipeline directly against FHWA's public LTPP distribution, fixed three real</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>data-engineering bugs along the way (pavement-family misclassification, an overly tight survey-matching</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>window, and section-level train/test leakage), added the FWD load-transfer-efficiency feature that a first</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>draft of this work had only flagged as future work, replaced ad hoc hyperparameters with an Optuna search</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>against group-aware cross-validation, replaced traffic-variable exclusion with leakage-safe imputation and an</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>explicit ablation, and tested — rather than assumed — whether JPCP/JRCP and CRCP should share a model. The</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>resulting structural models recover known pavement-engineering mechanisms from data alone and outperform</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>mechanistic-empirical benchmarks substantially; a companion operational variant with lagged IRI reaches</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>$R^2$ up to 0.70 for agencies whose priority is forecasting rather than mechanism attribution. We report every</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>place tuning did *not* help (pooled-rigid hyperparameter search, the ANN baseline, JPCP/JRCP-only splitting)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>with the same prominence as the places it did, because a Q1-caliber contribution should be judged on whether</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>its claims survive scrutiny, not on how favorably its numbers can be arranged. All code, from raw LTPP</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>download through trained model and SHAP explanation, is released publicly on GitHub so the full pipeline —</span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>not just the paper's claims — can be checked, reused, and extended.</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data and Code Availability</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>Rigid pavements have remained on the periphery of machine-learning research on IRI prediction, not because</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>they are of lesser practical importance, but because no prior study has extended the explainable</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>ensemble-learning approach developed for asphalt pavements to JPCP, JRCP, and CRCP under a comparable, jointly</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>benchmarked framework. This study closes that gap using a reproducible pipeline built directly against the</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>FHWA LTPP Standard Data Release, spanning 1,552 flexible-pavement and 1,693 rigid-pavement records across the</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>U.S. and Canadian LTPP network.</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>An Optuna-tuned gradient-boosted ensemble, evaluated under a section-grouped train/test split that prevents</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>repeated visits to the same physical pavement from inflating reported accuracy, explains 41.4% of</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>out-of-sample IRI variance for flexible pavements and 22.0% for pooled rigid pavements using distress,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>structure, and climate variables alone, rising to 69.8% and 39.1%, respectively, when each section's own</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>recent IRI history is included as an additional predictor. In both pavement families, the ensemble model</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>substantially outperforms a mechanistic-empirical-style linear regression and trains several times faster than</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>a comparably accurate random forest. SHAP-based interpretation recovers, without being given the functional</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>form of any mechanistic-empirical equation, the same distress mechanisms — transverse cracking and patching</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>for flexible pavements, joint faulting and load-transfer efficiency for rigid pavements — that decades of</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>pavement engineering research established by hand, while additionally identifying climate interactions that</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>fixed-coefficient equations cannot represent.</span>
 <span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>The complete reproducible pipeline (data acquisition, cleaning, modeling, and this manuscript) is available on</span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>GitHub at <span class="in">`https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP`</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>under an open license. Raw LTPP data is public domain, distributed by FHWA InfoPave.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>Three further results have direct implications for how LTPP data is used in pavement performance modeling.</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>First, evaluation protocol affects reported accuracy as much as model choice: a train/test split that does not</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>account for LTPP's repeated-visit panel structure can substantially overstate accuracy, and reporting</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>splitting strategy in sufficient detail for this to be assessed should be standard practice in LTPP-based</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>machine-learning studies. Second, traffic loading and load-transfer efficiency each contribute measurably but</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>modestly to model accuracy once properly imputed, indicating that neither should be excluded for missingness</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>nor treated as the dominant explanatory variable. Third, at the sample sizes currently available in LTPP, a</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>single pooled rigid-pavement model spanning JPCP, JRCP, and CRCP — distinguished by a pavement-type indicator</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>— generalizes better than separate models fit to each sub-family, despite their differing distress mechanisms.</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>These findings have practical relevance for both highway agencies and the pavement engineering research</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>community. Agencies prioritizing maintenance across mixed flexible and rigid networks can apply a common</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>modeling framework rather than maintaining separate tools built on incompatible assumptions, selecting between</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>the structural and operational model variants according to whether the underlying question is diagnostic</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>(identifying what is driving roughness) or predictive (determining when a section should next be inspected).</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>For the research community, the complete pipeline — from raw data acquisition through model training and SHAP</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a>explanation — is released as open-source code, allowing the reported results to be verified, extended to</span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a>future LTPP releases, and adapted to additional structural or sensor-derived features. The limitations</span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>discussed in @sec-limitations, particularly the sample size available for rigid pavements and reliance on a</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>single LTPP release, motivate a natural direction for future work: revisiting this framework as additional</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>LTPP monitoring cycles and Falling Weight Deflectometer coverage accumulate, and incorporating structural</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>response data beyond load-transfer efficiency, such as full deflection basins, as a further mechanistic input</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a>to explainable IRI prediction.</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a><span class="fu">## Data and Code Availability</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>The complete reproducible pipeline (data acquisition, cleaning, modeling, and this manuscript) is available on</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>GitHub at <span class="in">`https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP`</span></span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>under an open license. Raw LTPP data is public domain, distributed by FHWA InfoPave.</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
 <footer class="footer">
