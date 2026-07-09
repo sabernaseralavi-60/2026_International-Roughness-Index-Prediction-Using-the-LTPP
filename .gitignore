@@ -1,0 +1,30 @@
+# Quarto
+/.quarto/
+_book/
+_site/
+*_files/
+*_cache/
+
+# Large / temporary raw LTPP downloads (Access DBs, zips) — never keep in git
+data/_tmp_sdr/
+*.accdb
+*.mdb
+*.ZIP
+*.zip
+
+# R / Python
+.Rhistory
+.RData
+.Rproj.user/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.pat
+*token*
