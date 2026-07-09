@@ -7,7 +7,7 @@ MEPDG-style regression, a random forest, and a neural network.
 
 ## 📥 Downloads
 
-**📖 [Read the book online](https://sabernaseralavi-60.github.io/2026_International-Roughness-Index-Prediction-Using-the-LTPP/)** — a full Quarto book, styled after [R for Data Science (2e)](https://r4ds.hadley.nz/), with chapter sidebar navigation, search, and a light/dark toggle.
+**📖 [Read the book online](https://sabernaseralavi-60.github.io/2026_International-Roughness-Index-Prediction-Using-the-LTPP/)** — a full Quarto book with chapter sidebar navigation, search, and a light/dark toggle.
 
 > ⚙️ **One-time setup**: this link goes live once GitHub Pages is turned on for this repo — Settings → Pages → *Deploy from a branch* → branch **`gh-pages`**, folder **`/ (root)`** → Save. The rendered site is already pushed to the `gh-pages` branch; enabling Pages just starts serving it.
 
@@ -58,14 +58,14 @@ plots/    All figures used in the manuscript (EDA, SHAP summaries, predicted-vs-
 tables/   Publication-ready tables, each as both .csv and .docx
 docs/
   paper/       Quarto BOOK source for the English manuscript (index.qmd + 01-08 chapters + references.qmd),
-               renders to a multi-page r4ds-styled HTML site (branch gh-pages) and a combined PDF
+               renders to a multi-page HTML site (branch gh-pages) and a combined PDF
   paper_fa/    Standalone Quarto article for the Persian manuscript (→ Word)
   refs/        Source PDFs referenced in the methodology (NCHRP 1-37A Appendix PP, the target benchmark paper)
   author/      Author photo, CV, and co-author notes
 ```
 
 The rendered book output (`docs/paper/_book/`) is gitignored on `master` and instead lives on the `gh-pages`
-branch, exactly like r4ds's own publishing setup — `master` holds only the Quarto *source*.
+branch — `master` holds only the Quarto *source*.
 
 ## Reproducing the pipeline
 

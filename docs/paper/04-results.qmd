@@ -6,14 +6,13 @@
 
 ```{python}
 #| label: tbl-dataset-summary
-#| tbl-cap: "Summary of the assembled flexible and rigid LTPP IRI datasets."
+#| tbl-cap: "Summary of the assembled flexible and rigid LTPP IRI datasets (IRI min/max in tables/dataset_summary.csv)."
 #| echo: false
 import pandas as pd
 df = pd.read_csv("../../tables/dataset_summary.csv")
 df = df.rename(columns={"N_records": "N", "N_sections": "Sections", "N_states": "States",
-                         "IRI_mean": "IRI mean", "IRI_sd": "IRI sd", "IRI_min": "IRI min",
-                         "IRI_max": "IRI max", "Age_mean_yr": "Age mean (yr)"})
-df
+                         "IRI_mean": "IRI mean", "IRI_sd": "IRI sd", "Age_mean_yr": "Age mean (yr)"})
+df[["Dataset", "N", "Sections", "States", "IRI mean", "IRI sd", "Age mean (yr)"]]
 ```
 
 Both panels span a comparable range of in-service roughness (@fig-iri-dist), with the familiar right-skew of
@@ -53,20 +52,34 @@ df[["Pavement family", "Variant", "R2 (held-out)", "CV R2 mean", "CV R2 std"]]
 
 ```{python}
 #| label: tbl-flex-metrics
-#| tbl-cap: "Structural model comparison — flexible (asphalt) pavements."
+#| tbl-cap: "Structural model comparison — flexible (asphalt) pavements (MAE in tables/flexible_structural_model_metrics.csv)."
 #| echo: false
 import pandas as pd
+pd.set_option("display.max_colwidth", None)
+short_names = {
+    "MEPDG-style Linear Regression": "Linear (M-E style)",
+    "Random Forest": "Random Forest",
+    "ANN (MLP, Optuna-tuned)": "ANN (tuned)",
+    "Gradient-Boosted Ensemble (LightGBM, Optuna-tuned)": "LightGBM (tuned)",
+}
 df = pd.read_csv("../../tables/flexible_structural_model_metrics.csv")
-df[["Model","R2","RMSE","MAE","Train_time_s","Speedup_vs_RF"]].round(3)
+df["Model"] = df["Model"].replace(short_names)
+df = df[["Model", "R2", "RMSE", "Train_time_s", "Speedup_vs_RF"]].round(3)
+df.columns = ["Model", "R2", "RMSE", "Time (s)", "vs RF"]
+df
 ```
 
 ```{python}
 #| label: tbl-rigid-metrics
-#| tbl-cap: "Structural model comparison — rigid pavements, pooled JPCP+JRCP+CRCP."
+#| tbl-cap: "Structural model comparison — rigid pavements, pooled JPCP+JRCP+CRCP (MAE in tables/rigid_structural_model_metrics.csv)."
 #| echo: false
 import pandas as pd
+pd.set_option("display.max_colwidth", None)
 df = pd.read_csv("../../tables/rigid_structural_model_metrics.csv")
-df[["Model","R2","RMSE","MAE","Train_time_s","Speedup_vs_RF"]].round(3)
+df["Model"] = df["Model"].replace(short_names)
+df = df[["Model", "R2", "RMSE", "Train_time_s", "Speedup_vs_RF"]].round(3)
+df.columns = ["Model", "R2", "RMSE", "Time (s)", "vs RF"]
+df
 ```
 
 Four findings emerge from @tbl-master. First, **Optuna tuning and MICE-style traffic/LTE imputation
