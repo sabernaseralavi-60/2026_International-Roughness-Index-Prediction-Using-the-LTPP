@@ -7,16 +7,19 @@ MEPDG-style regression, a random forest, and a neural network.
 
 ## 📥 Downloads
 
-| File | View online | Direct download |
-|---|---|---|
-| 📄 Manuscript — English (PDF) | — | **[⬇ Download PDF](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/raw/master/docs/paper/paper_en.pdf)** |
-| 🌐 Manuscript — English (HTML) | **[View styled page](https://htmlpreview.github.io/?https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/blob/master/docs/paper/paper_en.html)** | [⬇ Download HTML](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/raw/master/docs/paper/paper_en.html) |
-| 📝 Manuscript — Persian (Word) | — | **[⬇ Download DOCX](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/raw/master/docs/paper/paper_fa.docx)** |
-| 📊 Master results table | — | [⬇ Download DOCX](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/raw/master/tables/master_lightgbm_comparison.docx) |
+**📖 [Read the book online](https://sabernaseralavi-60.github.io/2026_International-Roughness-Index-Prediction-Using-the-LTPP/)** — a full Quarto book, styled after [R for Data Science (2e)](https://r4ds.hadley.nz/), with chapter sidebar navigation, search, and a light/dark toggle.
 
-> The "View online" link renders the HTML manuscript as an actual styled web page (via [htmlpreview.github.io](https://htmlpreview.github.io)) rather than GitHub's raw-source view. The "Download" links go straight to the file — GitHub will save it to disk (PDF/DOCX) rather than opening a preview page.
->
-> Every other individual figure/table can be downloaded the same way: open it in [`plots/`](plots/) or [`tables/`](tables/), then use GitHub's **Download raw file** button (⬇ icon) on the file page.
+> ⚙️ **One-time setup**: this link goes live once GitHub Pages is turned on for this repo — Settings → Pages → *Deploy from a branch* → branch **`gh-pages`**, folder **`/ (root)`** → Save. The rendered site is already pushed to the `gh-pages` branch; enabling Pages just starts serving it.
+
+| File | Direct download |
+|---|---|
+| 📄 Manuscript — English (PDF, all chapters combined) | **[⬇ Download PDF](https://raw.githubusercontent.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/gh-pages/Beyond-Asphalt.pdf)** |
+| 📝 Manuscript — Persian (Word) | **[⬇ Download DOCX](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/raw/master/docs/paper_fa/paper_fa.docx)** |
+| 📊 Master results table | [⬇ Download DOCX](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/raw/master/tables/master_lightgbm_comparison.docx) |
+
+> Clicking a "Download" link saves the file straight to disk. Every other individual figure/table can be
+> downloaded the same way: open it in [`plots/`](plots/) or [`tables/`](tables/), then use GitHub's
+> **Download raw file** button (⬇ icon) on the file page.
 
 ## Why this exists
 
@@ -54,10 +57,15 @@ data/
 plots/    All figures used in the manuscript (EDA, SHAP summaries, predicted-vs-actual)
 tables/   Publication-ready tables, each as both .csv and .docx
 docs/
-  paper/    Quarto source for the manuscript (English .qmd → PDF/HTML, Persian .qmd → Word)
-  refs/     Source PDFs referenced in the methodology (NCHRP 1-37A Appendix PP, the target benchmark paper)
-  author/   Author photo, CV, and co-author notes
+  paper/       Quarto BOOK source for the English manuscript (index.qmd + 01-08 chapters + references.qmd),
+               renders to a multi-page r4ds-styled HTML site (branch gh-pages) and a combined PDF
+  paper_fa/    Standalone Quarto article for the Persian manuscript (→ Word)
+  refs/        Source PDFs referenced in the methodology (NCHRP 1-37A Appendix PP, the target benchmark paper)
+  author/      Author photo, CV, and co-author notes
 ```
+
+The rendered book output (`docs/paper/_book/`) is gitignored on `master` and instead lives on the `gh-pages`
+branch, exactly like r4ds's own publishing setup — `master` holds only the Quarto *source*.
 
 ## Reproducing the pipeline
 
@@ -86,11 +94,14 @@ python code/04_model.py rigid_crcp
 python code/06_consolidate_results.py
 python code/05_export_tables.py
 
-# 6. Render the manuscript
-cd docs/paper
-quarto render paper_en.qmd --to html
-quarto render paper_en.qmd --to pdf
-quarto render paper_fa.qmd --to docx
+# 6. Render the English book (HTML site + combined PDF, both formats via one command)
+cd docs/paper && quarto render
+
+# 7. Render the Persian manuscript to Word
+cd ../paper_fa && quarto render paper_fa.qmd --to docx
+
+# 8. (Maintainers) publish the rendered book to the gh-pages branch
+#    quarto publish gh-pages   — or push docs/paper/_book/ to an orphan gh-pages branch, as done here.
 ```
 
 Step 1 downloads directly from FHWA InfoPave's public CloudFront distribution (no login required) and
