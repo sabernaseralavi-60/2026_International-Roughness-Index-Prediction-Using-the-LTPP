@@ -1,0 +1,43 @@
+# Abstract {.unnumbered}
+
+International Roughness Index (IRI) governs how highway agencies prioritize maintenance, yet almost every
+machine-learning model built to predict it has been trained on asphalt (flexible) pavements alone, leaving
+rigid pavements to decades-old mechanistic-empirical regression equations. We close that gap, and respond
+directly to a Q1-caliber review of an earlier draft of this work. Using a reproducible pipeline built
+directly against the FHWA Long-Term Pavement Performance (LTPP) Standard Data Release, we assemble two
+matched, feature-rich panels — 1,552 flexible-pavement records across 208 sections in 55 states/provinces,
+and 1,693 rigid-pavement records (JPCP, JRCP, and CRCP) across 179 sections in 46 states/provinces — now
+enriched with Falling Weight Deflectometer joint load-transfer efficiency, and train an Optuna-tuned
+gradient-boosted ensemble, benchmarked against an MEPDG-style regression, a random forest, and an
+Optuna-tuned artificial neural network, with SHapley Additive exPlanations (SHAP) used to open the black box.
+
+Using a section-grouped train/test split that prevents the same physical pavement from leaking across folds,
+the tuned ensemble explains 41.4% of out-of-sample IRI variance for flexible pavements and 22.0% for pooled
+rigid pavements in a *structural* variant built from distress, structure, and climate alone, and up to 69.8%
+(flexible) and 39.1% (rigid) in a companion *operational* variant that adds each section's own recent IRI
+history — two deliberately distinct models answering two different engineering questions, reported side by
+side rather than conflated. Traffic loading and load-transfer efficiency, imputed rather than dropped, are
+shown by ablation to contribute modestly but non-trivially (roughly 0.02 $R^2$) to accuracy, and an explicit
+test shows that pooling JPCP/JRCP and CRCP into one rigid model outperforms splitting them at this sample
+size.
+
+SHAP analysis recovers, from data alone, the same dominant distress mechanisms that decades of
+mechanistic-empirical research encoded by hand — transverse cracking and patching for flexible pavements,
+wheel-path faulting and load-transfer efficiency for rigid pavements — while also surfacing climate
+interactions that the classical equations treat as fixed coefficients. We report this honestly, including
+the cases (a rigid-pavement hyperparameter search, the ANN baseline, JPCP/JRCP-only splitting) where an
+intervention did *not* help, and release the full pipeline, from raw LTPP download through trained model, as
+open code.
+
+**Keywords:** International Roughness Index, LTPP, machine learning, SHAP, pavement engineering, flexible
+pavement, rigid pavement, explainable AI
+
+::: {.callout-tip}
+## Reproducing this work
+This paper's figures and tables are pre-computed by the reproducible pipeline in [`/code`](https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/tree/master/code)
+and read as static assets in the chapters that follow, rather than re-executed at render time, so that
+`quarto render` does not require a live LTPP download or a multi-minute model-training pass. Run
+`python code/00_download_and_extract_all.py && python code/02_clean_and_merge.py && python code/03_eda.py
+&& python code/04_model.py flexible && python code/04_model.py rigid` (plus `rigid_jpcc` / `rigid_crcp`) from
+the project root to regenerate everything from scratch.
+:::

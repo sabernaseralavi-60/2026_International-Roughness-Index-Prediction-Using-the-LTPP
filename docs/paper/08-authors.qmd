@@ -1,0 +1,20 @@
+# About the Authors {.unnumbered}
+
+::: {.author-block}
+![](../author/naseralavi.jpg){width=140}
+
+**Seyed Saber Naseralavi** (corresponding author) holds a Ph.D. in Highway and Transportation Engineering from
+Tarbiat Modares University. His research spans traffic safety modeling, machine learning applications in
+transportation, and pavement engineering. Code: [github.com/sabernaseralavi-60](https://github.com/sabernaseralavi-60)
+:::
+
+::: {.author-block}
+**Ali Reza Ghanizadeh** is an Associate Professor in the Department of Civil Engineering at Sirjan University
+of Technology, Iran, working on pavement analysis and design, asphalt technology, and soft-computing
+applications in pavement management.
+:::
+
+::: {.author-block}
+**Akram Mazaheri** is a researcher in the Department of Civil and Environmental Engineering at Tarbiat
+Modares University, Iran, working on traffic safety and surrogate safety measures.
+:::

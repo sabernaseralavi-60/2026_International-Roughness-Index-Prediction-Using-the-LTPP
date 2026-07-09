@@ -1,0 +1,82 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "Beyond Asphalt"
+  subtitle: "A Cross-Pavement-Family Explainable Machine Learning Approach to International Roughness Index Prediction Using the LTPP Database"
+  author:
+    - name: "Seyed Saber Naseralavi"
+      corresponding: true
+      email: saber.naseralavi@gmail.com
+      affiliation: "Independent Researcher, Transportation & Traffic Engineering"
+    - name: "Ali Reza Ghanizadeh"
+      affiliation: "Sirjan University of Technology, Iran"
+    - name: "Akram Mazaheri"
+      affiliation: "Tarbiat Modares University, Iran"
+  date: today
+  reader-mode: true
+  page-footer:
+    left: |
+      *Beyond Asphalt* was written by Seyed Saber Naseralavi, Ali Reza Ghanizadeh, and Akram Mazaheri.
+    right: |
+      Built with <a href="https://quarto.org/">Quarto</a>, in the style of <a href="https://r4ds.hadley.nz/">R for Data Science</a>.
+  repo-url: https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP/
+  repo-branch: master
+  repo-actions: [edit, issue]
+  search: true
+  downloads: [pdf]
+  sidebar:
+    style: docked
+    background: light
+  chapters:
+    - index.qmd
+    - 01-introduction.qmd
+    - 02-related-work.qmd
+    - 03-methods.qmd
+    - 04-results.qmd
+    - 05-discussion.qmd
+    - 06-limitations.qmd
+    - 07-conclusion.qmd
+    - 08-authors.qmd
+    - references.qmd
+
+bibliography: references.bib
+csl: ieee.csl
+
+format:
+  html:
+    theme:
+      light: [cosmo, r4ds.scss]
+      dark: [darkly, r4ds-dark.scss]
+    code-link: true
+    code-fold: true
+    code-tools: true
+    code-copy: true
+    callout-appearance: simple
+    smooth-scroll: true
+    anchor-sections: true
+    citations-hover: true
+    footnotes-hover: true
+    fig-width: 7.5
+    fig-height: 5
+    grid:
+      sidebar-width: 250px
+      body-width: 850px
+      margin-width: 250px
+  pdf:
+    documentclass: scrbook
+    classoption: [oneside]
+    geometry: margin=1in
+    toc: true
+    number-sections: true
+    colorlinks: true
+    fig-pos: "H"
+    keep-tex: false
+
+execute:
+  echo: true
+  warning: false
+  eval: true
+
+editor: source

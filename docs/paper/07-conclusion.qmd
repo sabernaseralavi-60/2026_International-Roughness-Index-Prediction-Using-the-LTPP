@@ -1,0 +1,24 @@
+# Conclusion
+
+Rigid pavements have been the quiet exception in a decade of machine-learning progress on IRI prediction —
+not because they are unimportant, but because no one had built the pipeline to include them on equal footing
+with asphalt. We built that pipeline directly against FHWA's public LTPP distribution, fixed three real
+data-engineering bugs along the way (pavement-family misclassification, an overly tight survey-matching
+window, and section-level train/test leakage), added the FWD load-transfer-efficiency feature that a first
+draft of this work had only flagged as future work, replaced ad hoc hyperparameters with an Optuna search
+against group-aware cross-validation, replaced traffic-variable exclusion with leakage-safe imputation and an
+explicit ablation, and tested — rather than assumed — whether JPCP/JRCP and CRCP should share a model. The
+resulting structural models recover known pavement-engineering mechanisms from data alone and outperform
+mechanistic-empirical benchmarks substantially; a companion operational variant with lagged IRI reaches
+$R^2$ up to 0.70 for agencies whose priority is forecasting rather than mechanism attribution. We report every
+place tuning did *not* help (pooled-rigid hyperparameter search, the ANN baseline, JPCP/JRCP-only splitting)
+with the same prominence as the places it did, because a Q1-caliber contribution should be judged on whether
+its claims survive scrutiny, not on how favorably its numbers can be arranged. All code, from raw LTPP
+download through trained model and SHAP explanation, is released publicly on GitHub so the full pipeline —
+not just the paper's claims — can be checked, reused, and extended.
+
+## Data and Code Availability
+
+The complete reproducible pipeline (data acquisition, cleaning, modeling, and this manuscript) is available on
+GitHub at `https://github.com/sabernaseralavi-60/2026_International-Roughness-Index-Prediction-Using-the-LTPP`
+under an open license. Raw LTPP data is public domain, distributed by FHWA InfoPave.

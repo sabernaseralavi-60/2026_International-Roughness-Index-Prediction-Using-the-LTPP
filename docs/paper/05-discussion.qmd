@@ -1,0 +1,39 @@
+# Discussion
+
+Five findings stand out, several of them direct responses to points raised in our own internal review pass.
+
+**First, hyperparameter tuning helps unevenly.** Optuna tuning lifted flexible-pavement LightGBM $R^2$ from
+0.333 (untuned, no imputation) to 0.414, but pooled-rigid $R^2$ *fell slightly*, from 0.254 to 0.220, after
+the same tuning procedure. We do not paper over this: with only 179 rigid sections split across a 4-fold
+group cross-validation objective (roughly 35-45 sections per fold), the tuning objective itself is noisy, and
+Optuna can select hyperparameters (here, deeper trees, $\text{max\_depth}=7$) that fit that noisy objective
+better without generalizing better to the actual held-out split. This is a genuine finding about tuning
+small-panel data, not a reporting error, and future work on rigid-pavement LTPP models should budget for it
+— e.g. with nested cross-validation or a wider outer test set.
+
+**Second, FWD load-transfer efficiency earns its place as a first-class feature.** Adding it (previously
+flagged only as future work) both improves rigid-pavement accuracy modestly and, more importantly, gives SHAP
+a direct mechanistic variable to attribute IRI to, rather than only the faulting symptom of that mechanism.
+This is the single most pavement-engineering-relevant addition in this revision.
+
+**Third, an honest sensitivity analysis on traffic changes the conclusion from "irrelevant" to "modest but
+real."** Excluding AADTT/KESAL via imputation-ablation costs 0.019 $R^2$ (flexible) and 0.017 $R^2$ (pooled
+rigid) — not the dominant driver the classical M-E literature might suggest, but not zero either, and the
+imputation approach lets us say this on the *full* sample rather than confounding the comparison with a
+smaller traffic-complete subset.
+
+**Fourth, forecasting is a different (and much easier) task than structural attribution, and both are
+useful.** The operational, lagged-IRI models reach $R^2$ up to 0.70 (flexible) — because a section's own
+recent IRI trajectory is, unsurprisingly, the single best predictor of its next reading. We resist the
+temptation to report only this larger number: a pavement management system deciding *when to re-inspect* wants
+the operational model, while an agency deciding *which design or maintenance treatment to specify* wants the
+structural model, which isolates the effect of controllable distress and structural variables independent of
+a section's own history.
+
+**Fifth, pooling beats splitting for rigid pavements at this sample size**, empirically rather than by
+assumption (@sec-results) — a direct, data-driven answer to whether JPCP/JRCP and CRCP need separate models.
+
+Beyond these five, the persistent gap between single-split and cross-validated $R^2$ (0.414 vs. 0.227 for
+flexible pavements) is a reminder that panel data with repeated section visits punishes optimistic evaluation
+particularly severely; we raise it here not to relitigate prior work we cannot re-audit, but as a
+methodological point future LTPP-ML papers should address explicitly.

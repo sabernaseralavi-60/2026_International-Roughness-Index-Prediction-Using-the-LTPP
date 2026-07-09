@@ -1,0 +1,23 @@
+# Limitations {#sec-limitations}
+
+We report these directly rather than deferring them to a "future work" afterthought:
+
+- **Complete-case selection on structural predictors.** Both panels retain only records with a fully observed
+  *structural* core; traffic and LTE are now imputed rather than excluded, but the structural core itself
+  (distress, climate, thickness) is still complete-case. Sections with sparser instrumentation are
+  systematically excluded, and we have not formally tested whether they differ systematically from the
+  retained sample.
+- **Mixed age provenance.** 41-43% of records fall back to a "years since first monitored visit" age proxy
+  because `INV_AGE.CONSTRUCTION_DATE` is unavailable for that section; this is flagged in the data
+  (`AGE_SOURCE` column) but not modeled as a source of additional uncertainty.
+- **Imputation uncertainty is not propagated.** The `IterativeImputer` produces a single point estimate per
+  missing traffic/LTE value; a multiple-imputation approach with pooled variance (Rubin's rules) would give a
+  more complete uncertainty accounting than the point-estimate MICE pass used here.
+- **Rigid submodel instability.** The JPCP/JRCP-only and CRCP-only submodels are informative for the
+  pooling-vs-splitting question but are themselves too small (61-118 sections) to be deployed as standalone
+  operational models; their cross-validation variance is correspondingly large.
+- **Sample size**, while comparable in order of magnitude to @song2022efficient's flexible-only 2,699-record
+  study, is smaller than that benchmark in the flexible family and reflects only LTPP's current curated
+  analysis-ready tables rather than the full historical survey record.
+- **This is a single-snapshot SDR release (39, September 2025).** LTPP data is periodically revised; a fully
+  longitudinal reproducibility check against a future release is left for follow-up work.

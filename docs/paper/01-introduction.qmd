@@ -1,0 +1,68 @@
+# Introduction
+
+Every highway agency in the United States eventually answers the same question with a single number: how
+rough is this road? Since the 1980s that number has been the International Roughness Index (IRI), a
+statistic computed from a simulated quarter-car bouncing along a measured longitudinal profile at 80 km/h
+[@sayers1986guidelines]. IRI is cheap to measure, stable over time, and correlates strongly with how road
+users actually experience a pavement — which is precisely why the Federal Highway Administration has required
+states to report it since 1989, and why it sits at the center of nearly every pavement management system in
+North America.
+
+Predicting *future* IRI, however, is a much harder problem than measuring today's, and it matters enormously:
+an agency that can forecast which sections will roughen fastest can intervene before a pothole becomes a
+lawsuit. Two families of models have historically competed to do this. The first is mechanistic-empirical
+(M-E): hand-derived regression equations, of the form popularized by the 2002 AASHTO Design Guide, that
+express IRI as a linear function of a handful of distress variables — cracking, rutting, faulting, patching —
+weighted by coefficients fit to data decades ago [@ara2004smoothness]. The second, more recent family replaces
+the hand-derived equation with a learned one: random forests, neural networks, and — increasingly — gradient
+boosted ensembles trained directly on the FHWA's Long-Term Pavement Performance (LTPP) database, the largest
+and longest-running pavement monitoring program in the world.
+
+@song2022efficient's ThunderGBM-based ensemble model is the clearest recent example of the second family done
+well: 2,699 observations, 20 engineered features, a SHAP explanation layer, and benchmark comparisons against
+the M-E equation, a random forest, and an artificial neural network (ANN). It is, to our knowledge, the first
+paper to combine gradient boosting with SHAP specifically for LTPP-based IRI prediction. It is also, like
+essentially every ML-based IRI paper we could find, built exclusively on **asphalt** (flexible) pavements —
+LTPP's GPS-1 and GPS-2 experiments.
+
+That silence about rigid pavements is not a minor omission. Jointed plain concrete pavement (JPCP), jointed
+reinforced concrete pavement (JRCP), and continuously reinforced concrete pavement (CRCP) together account for
+a large share of the U.S. Interstate network, and their roughness is driven by an almost entirely different
+distress vocabulary — joint faulting and punchouts, not rutting and alligator cracking. The NCHRP 1-37A
+Appendix PP smoothness model [@ara2004smoothness], still in active use inside AASHTOWare Pavement ME today,
+handles rigid pavements the old-fashioned way: a single fixed-form linear equation,
+$$
+\text{IRI} = \text{IRI}_0 + 0.013\cdot TC + 0.007\cdot SPALL + 0.005\cdot PATCH + 0.0015\cdot TFAULT + 0.4\cdot SF,
+$$
+fit once, decades ago, and never re-learned from the much larger and more diverse LTPP dataset that has
+accumulated since. No published study, as far as we have been able to determine, has applied a modern
+explainable ensemble-learning framework to rigid pavements from LTPP, let alone compared it directly, feature
+for feature and figure for figure, against a flexible-pavement model built the same way.
+
+This paper does exactly that. We built a single, reproducible pipeline — documented in full in
+@sec-methods, and released as open code — that pulls flexible **and** rigid pavement records from the same
+LTPP release, engineers a comparable feature set for each, and trains matched gradient-boosted ensemble
+models with SHAP explanations for both. Along the way we ran into, and fixed, three real data-engineering
+problems (a pavement-family mislabeling bug, a too-tight survey-matching window, and a subtle train/test
+leakage bug) that we describe openly in @sec-methods and @sec-limitations, because how a dataset gets built
+is as much a part of the scientific record as what the model finds.
+
+Our contributions are five-fold:
+
+1. **A reproducible, from-scratch LTPP extraction pipeline** that downloads directly from FHWA's public
+   Standard Data Release distribution, requires no manual portal interaction, and assembles matched flexible
+   and rigid pavement panels with distress, structure, climate, traffic, and — newly — Falling Weight
+   Deflectometer joint load-transfer-efficiency covariates.
+2. **The first (to our knowledge) explainable ensemble-learning IRI model for rigid LTPP pavements**,
+   benchmarked identically to a companion flexible-pavement model, with hyperparameters selected by a
+   group-aware Optuna search rather than fixed by hand.
+3. **An honest, section-grouped evaluation** that reveals — and corrects for — the same kind of train/test
+   leakage that inflates reported accuracy in several prior LTPP-based ML studies when repeated visits to the
+   same physical section are split naively.
+4. **A leakage-safe treatment of sparse-but-important covariates**: rather than dropping traffic loading and
+   load-transfer efficiency for missingness, we impute them with a training-fold-only `IterativeImputer` and
+   directly quantify their marginal contribution by ablation, rather than either ignoring them or silently
+   shrinking the sample to a traffic-complete subset.
+5. **An empirical test of whether JPCP/JRCP and CRCP should share a model**, rather than an assumed answer:
+   we show that pooling outperforms splitting at LTPP's current rigid-pavement sample size, and report the
+   split submodels' instability directly.

@@ -1,0 +1,46 @@
+# Related Work
+
+IRI prediction models fall broadly into three generations. The first generation, exemplified by the AASHO
+Road Test serviceability equations, @paterson1987road's World Bank incremental deterioration models (later
+folded into HDM-III/HDM-4), and the M-E Pavement Design Guide's smoothness models [@ara2004smoothness; @vonquintus2001flexible],
+uses linear or mildly non-linear regression on a small, hand-selected set of distress and site variables.
+@vonquintus2001flexible's companion appendix to the one this paper builds on — Appendix OO-1, for flexible
+rather than rigid pavements — established the same distress-based regression form for AC pavements that
+Appendix PP later established for JPCP/CRCP, and both remain the operational core of AASHTOWare Pavement ME
+today. Numerous follow-on studies refit this linear form to different regions and pavement types: @alomari1995effect
+and @mactutis2000investigation examined how individual distress types (cracking, rutting, patching) trade off
+against each other in explaining IRI on the AASHO and WesTrack test sections respectively; @khattak2014iri and
+@perezacebo2020iri fit comparable regressions specifically for HMA-overlaid and two-lane flexible pavements.
+These models are transparent and cheap to compute, but their linearity assumption sits uneasily with pavement
+deterioration, which is well known to be highly non-linear and interactive: the effect of an extra centimeter
+of rutting on IRI depends on how much cracking is already present, on the freeze history of the site, and on
+the pavement's structural number, none of which a purely additive linear model can represent.
+
+The second generation replaced the linear form with flexible learners trained directly on LTPP or state DOT
+pavement management data. Early work leaned on artificial neural networks: @choi2004pavement's back-propagation
+network and @ziari2016prediction's ANN/GMDH comparison both showed sizeable accuracy gains over linear
+regression on flexible-pavement IRI, and @kaya2020statistics benchmarked statistical and AI-based remaining-service-life
+models side by side on flexible and composite pavements. @kargahostadi2015framework's comparative framework
+for empirical pavement performance models was among the first to argue systematically that model *form*, not
+just coefficients, should be selected empirically rather than assumed. Tree ensembles arrived next:
+@breiman2001random's random forest, applied to LTPP flexible pavements by @gong2018use with a reported testing-set
+$R^2$ of 0.974, and the gradient boosting family popularized by tools like @ke2017lightgbm's LightGBM and
+applied to asphalt-overlay performance by @zhang2020analysis, consistently outperformed linear M-E benchmarks
+in the literature on raw prediction accuracy, at the cost of interpretability: a 400-tree ensemble does not
+hand an engineer a coefficient to reason about.
+
+The third generation, which @song2022efficient's paper and this one both belong to, restores interpretability
+without giving up the ensemble's accuracy advantage, using SHapley Additive exPlanations
+[@lundberg2017unified]. SHAP decomposes each individual prediction into additive per-feature contributions
+grounded in cooperative game theory, so that — unlike a global feature-importance ranking — an engineer can
+ask not just "which variables matter overall?" but "why did the model predict *this* section will roughen
+*this* fast?" @song2022efficient used SHAP to show that a simplified six-feature ThunderGBM model retained
+most of the accuracy of the full twenty-feature version, a genuinely useful finding for agencies with limited
+data-collection budgets.
+
+What none of these studies do — flexible-pavement or otherwise — is (a) apply the same explainable-ensemble
+recipe to rigid pavements and compare the two families side by side, (b) directly incorporate Falling Weight
+Deflectometer joint load-transfer efficiency — the mechanistic quantity that faulting is itself a downstream
+symptom of — as a learned feature rather than leaving it implicit, or (c) report accuracy under a splitting
+strategy that accounts for LTPP's repeated-visit panel structure. Those three gaps are what this work
+addresses.
